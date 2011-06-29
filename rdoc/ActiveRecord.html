@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+
+  <title>Module: ActiveRecord</title>
+
+  <link rel="stylesheet" href="./rdoc.css" type="text/css" media="screen" />
+
+  <script src="./js/jquery.js" type="text/javascript" charset="utf-8"></script>
+  <script src="./js/thickbox-compressed.js" type="text/javascript" charset="utf-8"></script>
+  <script src="./js/quicksearch.js" type="text/javascript" charset="utf-8"></script>
+  <script src="./js/darkfish.js" type="text/javascript" charset="utf-8"></script>
+
+</head>
+<body id="top" class="module">
+
+  <div id="metadata">
+    <div id="home-metadata">
+      <div id="home-section" class="section">
+        <h3 class="section-header">
+          <a href="./index.html">Home</a>
+          <a href="./index.html#classes">Classes</a>
+          <a href="./index.html#methods">Methods</a>
+        </h3>
+      </div>
+    </div>
+
+    <div id="file-metadata">
+      <div id="file-list-section" class="section">
+        <h3 class="section-header">In Files</h3>
+        <div class="section-body">
+          <ul>
+          
+            <li><a href="./lib/cache-machine_rb.html?TB_iframe=true&amp;height=550&amp;width=785"
+              class="thickbox" title="lib/cache-machine.rb">lib/cache-machine.rb</a></li>
+          
+          </ul>
+        </div>
+      </div>
+
+      
+    </div>
+
+    <div id="class-metadata">
+      
+
+      
+
+      
+      <!-- Namespace Contents -->
+      <div id="namespace-list-section" class="section">
+        <h3 class="section-header">Namespace</h3>
+        <ul class="link-list">
+          
+          <li><span class="type">MODULE</span> <a href="ActiveRecord/CacheMachine.html">ActiveRecord::CacheMachine</a></li>
+          
+        </ul>
+      </div>
+      
+
+      
+
+      
+    </div>
+
+    <div id="project-metadata">
+      
+      
+      <div id="fileindex-section" class="section project-section">
+        <h3 class="section-header">Files</h3>
+        <ul>
+        
+          <li class="file"><a href="./README_rdoc.html">README.rdoc</a></li>
+        
+        </ul>
+      </div>
+      
+
+      <div id="classindex-section" class="section project-section">
+        <h3 class="section-header">Class/Module Index
+          <span class="search-toggle"><img src="./images/find.png"
+            height="16" width="16" alt="[+]"
+            title="show/hide quicksearch" /></span></h3>
+        <form action="#" method="get" accept-charset="utf-8" class="initially-hidden">
+        <fieldset>
+          <legend>Quicksearch</legend>
+          <input type="text" name="quicksearch" value=""
+            class="quicksearch-field" />
+        </fieldset>
+        </form>
+
+        <ul class="link-list">
+        
+          <li><a href="./ActiveRecord.html">ActiveRecord</a></li>
+        
+          <li><a href="./ActiveRecord/CacheMachine.html">ActiveRecord::CacheMachine</a></li>
+        
+          <li><a href="./ActiveRecord/CacheMachine/AssociatonMachine.html">ActiveRecord::CacheMachine::AssociatonMachine</a></li>
+        
+          <li><a href="./ActiveRecord/CacheMachine/AssociatonMachine/ClassMethods.html">ActiveRecord::CacheMachine::AssociatonMachine::ClassMethods</a></li>
+        
+          <li><a href="./ActiveRecord/CacheMachine/AssociatonMachine/InstanceMethods.html">ActiveRecord::CacheMachine::AssociatonMachine::InstanceMethods</a></li>
+        
+          <li><a href="./ActiveRecord/CacheMachine/ClassMethods.html">ActiveRecord::CacheMachine::ClassMethods</a></li>
+        
+        </ul>
+        <div id="no-class-search-results" style="display: none;">No matching classes.</div>
+      </div>
+
+      
+    </div>
+  </div>
+
+  <div id="documentation">
+    <h1 class="module">ActiveRecord</h1>
+
+    <div id="description" class="description">
+      
+<h1>Cache Machine</h1>
+
+<p>Provides smart caching for collections or method results of any <tt><a
+href="ActiveRecord.html">ActiveRecord</a></tt> object.</p>
+
+<h3>EXAMPLES</h3>
+
+<pre># Fetch cache of venues collection on model_instance.
+@model_instance.fetch_cache_of :venues              { @neighborhood.venues.to_html }
+
+# Specify format.
+@model_instance.fetch_cache_of :venues, :json       { @neighborhood.venues.to_json }
+
+# Paginated content.
+@model_instance.fetch_cache_of :venues, :json, page { @neighborhood.venues.to_json }</pre>
+
+<p>In you target model:</p>
+
+<pre>acts_as_cache_machine_for :venues  =&gt; [:hotspots, :today_events],
+                          :cities  =&gt; [:venues],
+                          :streets =&gt; :hotspots,
+                          :users</pre>
+
+<p>This example shows you how changes of one collection affect on invalidation
+process:</p>
+<ul><li>
+<p>Users cache is invalidated when changing the <em>users</em> collection
+(<em>add</em>, <em>delete</em>, <em>update</em>)</p>
+</li><li>
+<p>Venues cache is invalidated when changing the <em>venues</em> collection</p>
+</li><li>
+<p>Venues cache is invalidated when changing the <em>cities</em> collection.
+In this case machine automatically invalidates <em>hotspots</em> and
+<em>today_events</em></p>
+</li><li>
+<p>Cities cache is invalidated when changing the <em>cities</em> collection</p>
+</li><li>
+<p>Hotspots cache is invalidated when changing the <em>venues</em> collection</p>
+</li><li>
+<p>Hotspots cache is invalidates when changing the <em>streets</em> collection</p>
+</li><li>
+<p>TodayEvents cache is invalidated when changing the <em>venues</em>
+collection</p>
+</li></ul>
+
+<p><b>Keys in cache-map hash is your <a
+href="ActiveRecord.html">ActiveRecord</a> collections, values is whatever
+you want (methods, collections, variables etc).</b></p>
+
+<h3>Custom cache keys</h3>
+
+<p>For example you need to cache <em>upcoming_events</em> from 11/11/11 to
+12/12/12 by date.</p>
+<dl><dt>Use timestamps</dt>
+<dd>
+<p><tt>Rails.cache.fetch(&quot;upcoming_events_#{@city.timestamp_of
+:upcoming_events}_11/11/11-12/12/12&quot;)</tt></p>
+</dd></dl>
+
+<p><tt>timestamp_of</tt> generates timestamp for you. This timestamp changes
+on any change in <em>upcoming_events</em> collection.</p>
+
+<h3>Timestamps as cache keys on <a href="ActiveRecord.html">ActiveRecord</a> classes:</h3>
+
+<pre>UpcomingEvents.timestamp</pre>
+
+<p>Timestamp automatically changed when changing collection.</p>
+
+    </div><!-- description -->
+
+    
+    <div id="5Buntitled-5D" class="documentation-section">
+      
+
+      
+
+      
+
+      
+
+      <!-- Methods -->
+      
+    </div><!-- 5Buntitled-5D -->
+  
+
+  </div><!-- documentation -->
+
+  <div id="validator-badges">
+    <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+    <p><small>Generated with the <a href="http://deveiate.org/projects/Darkfish-Rdoc/">Darkfish
+      Rdoc Generator</a> 2</small>.</p>
+  </div>
+
+</body>
+</html>
+
