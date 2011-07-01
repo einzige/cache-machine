@@ -80,6 +80,18 @@ module ActiveRecord
         cache_associated(associations)
       end
 
+      # Defines timestamp for object.
+      def define_timestamp timestamp_name, options = {}
+        define_method timestamp_name do
+          _timestamp_key = self.timestamp_key_of(timestamp_name)
+
+          fetch_cache_of(_timestamp_key, options) do
+            delete_cache_of _timestamp_key # When cache expired by time.
+            Time.now.to_i.to_s
+          end
+        end
+      end
+
       # Returns timestamp of class collection.
       def timestamp format = :ehtml
         Rails.cache.fetch(timestamp_key format) { Time.now.to_i.to_s }
@@ -120,16 +132,6 @@ module ActiveRecord
         def cache_associated associations
           [*associations].each do |association|
             self.cache_map.merge! association.is_a?(Hash) ? association : {association => []}
-          end
-        end
-
-        # Defines timestamp for object.
-        def define_timestamp timestamp_name, options = {}
-          define_method timestamp_name do
-            fetch_cache_of(timestamp_name, options) do
-              delete_cache_of timestamp_name
-              Time.now.to_i.to_s
-            end
           end
         end
 
