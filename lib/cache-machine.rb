@@ -139,7 +139,7 @@ module ActiveRecord
           # Find all associations  between +record+ class and current class.
           associations = record.class.reflect_on_all_associations.find_all { |association| association.klass == self }
           associations.each do |association|
-            record.send(association.name).reload.each do |cache_source_record|
+            record.send(association.name).each do |cache_source_record|
               # Reset cache of association with name +association_id+ for each object associated with +record+.
               cache_source_record.delete_cache_of association_id
             end
