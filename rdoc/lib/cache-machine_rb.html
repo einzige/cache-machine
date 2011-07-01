@@ -6,7 +6,7 @@
 <head>
   <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
 
-  <title>File: cache-machine.rb [cache-machine ]</title>
+  <title>File: cache-machine.rb [cache-machine 0.0.1]</title>
 
   <link type="text/css" media="screen" href="../rdoc.css" rel="stylesheet" />
 
@@ -24,7 +24,7 @@
   <div id="metadata">
     <dl>
       <dt class="modified-date">Last Modified</dt>
-      <dd class="modified-date">Tue Jun 28 08:06:06 -0700 2011</dd>
+      <dd class="modified-date">Thu Jun 30 20:29:57 -0700 2011</dd>
 
       
       <dt class="requires">Requires</dt>
@@ -52,10 +52,10 @@ href="../ActiveRecord.html">ActiveRecord</a></tt> object.</p>
 <h3>EXAMPLES</h3>
 
 <pre># Fetch cache of venues collection on model_instance.
-@model_instance.fetch_cache_of :venues              { @neighborhood.venues.to_html }
+@model_instance.fetch_cache_of :venues { @neighborhood.venues.to_html }
 
 # Specify format.
-@model_instance.fetch_cache_of :venues, :json       { @neighborhood.venues.to_json }
+@model_instance.fetch_cache_of :venues, :json { @neighborhood.venues.to_json }
 
 # Paginated content.
 @model_instance.fetch_cache_of :venues, :json, page { @neighborhood.venues.to_json }</pre>
@@ -104,7 +104,8 @@ whatever you want (methods, collections, variables etc).</b></p>
 </dd></dl>
 
 <p><tt>timestamp_of</tt> generates timestamp for you. This timestamp changes
-on any change in <em>upcoming_events</em> collection.</p>
+on any change in <em>upcoming_events</em> collection. TODO: write more. We
+have a lot of features for timestamps.</p>
 
 <h3>Timestamps as cache keys on <a href="../ActiveRecord.html">ActiveRecord</a> classes:</h3>
 

@@ -9,10 +9,10 @@
 # === EXAMPLES
 #
 #   # Fetch cache of venues collection on model_instance.
-#   @model_instance.fetch_cache_of :venues              { @neighborhood.venues.to_html }
+#   @model_instance.fetch_cache_of :venues { @neighborhood.venues.to_html }
 #
 #   # Specify format.
-#   @model_instance.fetch_cache_of :venues, :json       { @neighborhood.venues.to_json }
+#   @model_instance.fetch_cache_of :venues, :json { @neighborhood.venues.to_json }
 #
 #   # Paginated content.
 #   @model_instance.fetch_cache_of :venues, :json, page { @neighborhood.venues.to_json }

@@ -127,10 +127,10 @@ href="ActiveRecord.html">ActiveRecord</a></tt> object.</p>
 <h3>EXAMPLES</h3>
 
 <pre># Fetch cache of venues collection on model_instance.
-@model_instance.fetch_cache_of :venues              { @neighborhood.venues.to_html }
+@model_instance.fetch_cache_of :venues { @neighborhood.venues.to_html }
 
 # Specify format.
-@model_instance.fetch_cache_of :venues, :json       { @neighborhood.venues.to_json }
+@model_instance.fetch_cache_of :venues, :json { @neighborhood.venues.to_json }
 
 # Paginated content.
 @model_instance.fetch_cache_of :venues, :json, page { @neighborhood.venues.to_json }</pre>
@@ -179,7 +179,8 @@ you want (methods, collections, variables etc).</b></p>
 </dd></dl>
 
 <p><tt>timestamp_of</tt> generates timestamp for you. This timestamp changes
-on any change in <em>upcoming_events</em> collection.</p>
+on any change in <em>upcoming_events</em> collection. TODO: write more. We
+have a lot of features for timestamps.</p>
 
 <h3>Timestamps as cache keys on <a href="ActiveRecord.html">ActiveRecord</a> classes:</h3>
 

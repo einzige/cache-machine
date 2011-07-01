@@ -59,6 +59,8 @@
           
           <li><a href="#method-i-cache_associated">#cache_associated</a></li>
           
+          <li><a href="#method-i-define_timestamp">#define_timestamp</a></li>
+          
           <li><a href="#method-i-delete_association_cache_on">#delete_association_cache_on</a></li>
           
           <li><a href="#method-i-has_and_belongs_to_many">#has_and_belongs_to_many</a></li>
@@ -164,7 +166,7 @@
             
             <div class="method-source-code" id="cache_associated-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 107</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 120</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">cache_associated</span> <span class="ruby-identifier">associations</span>
   [*<span class="ruby-identifier">associations</span>].<span class="ruby-identifier">each</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">association</span><span class="ruby-operator">|</span>
     <span class="ruby-keyword">self</span>.<span class="ruby-identifier">cache_map</span>.<span class="ruby-identifier">merge!</span> <span class="ruby-identifier">association</span>.<span class="ruby-identifier">is_a?</span>(<span class="ruby-constant">Hash</span>) <span class="ruby-operator">?</span> <span class="ruby-identifier">association</span> <span class="ruby-operator">:</span> {<span class="ruby-identifier">association</span> =<span class="ruby-operator">&gt;</span> []}
@@ -178,6 +180,44 @@
 
           
         </div><!-- cache_associated-method -->
+
+      
+        <div id="define_timestamp-method" class="method-detail ">
+          <a name="method-i-define_timestamp"></a>
+
+          
+          <div class="method-heading">
+            <span class="method-name">define_timestamp</span><span
+              class="method-args">(timestamp_name, options = {})</span>
+            <span class="method-click-advice">click to toggle source</span>
+          </div>
+          
+
+          <div class="method-description">
+            
+            <p>Defines timestamp for object.</p>
+            
+
+            
+            <div class="method-source-code" id="define_timestamp-source">
+<pre>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 127</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">define_timestamp</span> <span class="ruby-identifier">timestamp_name</span>, <span class="ruby-identifier">options</span> = {}
+  <span class="ruby-identifier">define_method</span> <span class="ruby-identifier">timestamp_name</span> <span class="ruby-keyword">do</span>
+    <span class="ruby-identifier">fetch_cache_of</span>(<span class="ruby-identifier">timestamp_name</span>, <span class="ruby-identifier">options</span>) <span class="ruby-keyword">do</span>
+      <span class="ruby-identifier">delete_cache_of</span> <span class="ruby-identifier">timestamp_name</span>
+      <span class="ruby-constant">Time</span>.<span class="ruby-identifier">now</span>.<span class="ruby-identifier">to_i</span>.<span class="ruby-identifier">to_s</span>
+    <span class="ruby-keyword">end</span>
+  <span class="ruby-keyword">end</span>
+<span class="ruby-keyword">end</span></pre>
+            </div><!-- define_timestamp-source -->
+            
+          </div>
+
+          
+
+          
+        </div><!-- define_timestamp-method -->
 
       
         <div id="delete_association_cache_on-method" class="method-detail ">
@@ -202,7 +242,7 @@ collection changed.</p>
             
             <div class="method-source-code" id="delete_association_cache_on-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 115</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 138</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">delete_association_cache_on</span> <span class="ruby-identifier">record</span>, <span class="ruby-identifier">association_id</span>
   <span class="ruby-comment"># Find all associations  between +record+ class and current class.</span>
   <span class="ruby-identifier">associations</span> = <span class="ruby-identifier">record</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">reflect_on_all_associations</span>.<span class="ruby-identifier">find_all</span> { <span class="ruby-operator">|</span><span class="ruby-identifier">association</span><span class="ruby-operator">|</span> <span class="ruby-identifier">association</span>.<span class="ruby-identifier">klass</span> <span class="ruby-operator">==</span> <span class="ruby-keyword">self</span> }
@@ -245,7 +285,7 @@ hook Cache Machine.</p>
             
             <div class="method-source-code" id="has_and_belongs_to_many-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 139</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 162</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">has_and_belongs_to_many</span>(<span class="ruby-identifier">association_id</span>, <span class="ruby-identifier">options</span> = {})
   <span class="ruby-comment"># Ensure what collection should be tracked.</span>
   <span class="ruby-keyword">if</span>(<span class="ruby-identifier">should_be_on_hook</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">cache_map</span>.<span class="ruby-identifier">keys</span>.<span class="ruby-identifier">include?</span>(<span class="ruby-identifier">association_id</span>))
@@ -287,7 +327,7 @@ Machine.</p>
             
             <div class="method-source-code" id="has_many-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 127</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 150</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">has_many</span>(<span class="ruby-identifier">association_id</span>, <span class="ruby-identifier">options</span> = {})
   <span class="ruby-comment"># Ensure what collection should be tracked.</span>
   <span class="ruby-keyword">if</span> (<span class="ruby-identifier">should_be_on_hook</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">cache_map</span>.<span class="ruby-identifier">keys</span>.<span class="ruby-identifier">include?</span>(<span class="ruby-identifier">association_id</span>)) <span class="ruby-operator">&amp;&amp;</span> <span class="ruby-identifier">options</span>[<span class="ruby-value">:through</span>]
@@ -332,7 +372,7 @@ Machine.</p>
             
             <div class="method-source-code" id="hook_cache_machine_on-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 153</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 176</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">hook_cache_machine_on</span> <span class="ruby-identifier">association_id</span>
   <span class="ruby-keyword">case</span> (<span class="ruby-identifier">reflection</span> = (<span class="ruby-identifier">target_class</span> = <span class="ruby-keyword">self</span>).<span class="ruby-identifier">reflect_on_association</span> <span class="ruby-identifier">association_id</span>)
   <span class="ruby-keyword">when</span> <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">Reflection</span><span class="ruby-operator">::</span><span class="ruby-constant">ThroughReflection</span>

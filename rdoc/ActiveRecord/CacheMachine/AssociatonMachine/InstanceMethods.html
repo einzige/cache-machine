@@ -73,6 +73,8 @@
           
           <li><a href="#method-i-timestamp_of">#timestamp_of</a></li>
           
+          <li><a href="#method-i-timestamped_key_of">#timestamped_key_of</a></li>
+          
         </ul>
       </div>
       
@@ -157,23 +159,22 @@
           
           <div class="method-heading">
             <span class="method-name">cache_key_of</span><span
-              class="method-args">(_member, cache_format = :ehtml, page_nr = 1)</span>
+              class="method-args">(_member, options = {})</span>
             <span class="method-click-advice">click to toggle source</span>
           </div>
           
 
           <div class="method-description">
             
-            <p>Returns cache key of <tt>_member</tt> with given <tt>cache_format</tt> on
-page with number <tt>page_nr</tt>.</p>
+            <p>Returns cache key of <tt>_member</tt>. TODO: describe options.</p>
             
 
             
             <div class="method-source-code" id="cache_key_of-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 174</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">cache_key_of</span> <span class="ruby-identifier">_member</span>, <span class="ruby-identifier">cache_format</span> = <span class="ruby-value">:ehtml</span>, <span class="ruby-identifier">page_nr</span> = <span class="ruby-value">1</span>
-  [<span class="ruby-keyword">self</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">name</span>, <span class="ruby-keyword">self</span>.<span class="ruby-identifier">to_param</span>, <span class="ruby-identifier">_member</span>, <span class="ruby-identifier">cache_format</span>, <span class="ruby-identifier">page_nr</span>].<span class="ruby-identifier">join</span> <span class="ruby-string">'_'</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 198</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">cache_key_of</span> <span class="ruby-identifier">_member</span>, <span class="ruby-identifier">options</span> = {}
+  [<span class="ruby-keyword">self</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">name</span>, <span class="ruby-keyword">self</span>.<span class="ruby-identifier">to_param</span>, <span class="ruby-identifier">_member</span>, <span class="ruby-identifier">options</span>[<span class="ruby-value">:format</span>] <span class="ruby-operator">||</span> <span class="ruby-value">:ehtml</span>, <span class="ruby-identifier">options</span>[<span class="ruby-value">:page</span>] <span class="ruby-operator">||</span> <span class="ruby-value">1</span>].<span class="ruby-identifier">join</span> <span class="ruby-string">'_'</span>
 <span class="ruby-keyword">end</span></pre>
             </div><!-- cache_key_of-source -->
             
@@ -204,7 +205,7 @@ page with number <tt>page_nr</tt>.</p>
             
             <div class="method-source-code" id="delete_cache_of-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 184</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 217</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">delete_cache_of</span> <span class="ruby-identifier">_member</span>
   <span class="ruby-identifier">delete_cache_of_only</span> <span class="ruby-identifier">_member</span>
   <span class="ruby-keyword">if</span> <span class="ruby-identifier">chain</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">cache_map</span>[<span class="ruby-identifier">_member</span>]
@@ -240,11 +241,11 @@ page with number <tt>page_nr</tt>.</p>
             
             <div class="method-source-code" id="delete_cache_of_only-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 192</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 225</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">delete_cache_of_only</span> <span class="ruby-identifier">_member</span>
   <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">CacheMachine</span><span class="ruby-operator">::</span><span class="ruby-constant">CACHE_FORMATS</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">cache_format</span><span class="ruby-operator">|</span>
     <span class="ruby-identifier">page_nr</span> = <span class="ruby-value">0</span>
-    <span class="ruby-keyword">while</span> <span class="ruby-constant">Rails</span>.<span class="ruby-identifier">cache</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-identifier">cache_key_of</span>(<span class="ruby-identifier">_member</span>, <span class="ruby-identifier">cache_format</span>, <span class="ruby-identifier">page_nr</span> <span class="ruby-operator">+=</span> <span class="ruby-value">1</span>)); <span class="ruby-keyword">end</span>
+    <span class="ruby-keyword">while</span> <span class="ruby-constant">Rails</span>.<span class="ruby-identifier">cache</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-identifier">cache_key_of</span>(<span class="ruby-identifier">_member</span>, {<span class="ruby-value">:format</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">cache_format</span>, <span class="ruby-value">:page</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">page_nr</span> <span class="ruby-operator">+=</span> <span class="ruby-value">1</span>})); <span class="ruby-keyword">end</span>
   <span class="ruby-keyword">end</span>
   <span class="ruby-identifier">reset_timestamp_of</span> <span class="ruby-identifier">_member</span>
 <span class="ruby-keyword">end</span></pre>
@@ -264,22 +265,32 @@ page with number <tt>page_nr</tt>.</p>
           
           <div class="method-heading">
             <span class="method-name">fetch_cache_of</span><span
-              class="method-args">(_member, cache_format = :ehtml, page_nr = 1)</span>
+              class="method-args">(_member, options = {})</span>
             <span class="method-click-advice">click to toggle source</span>
           </div>
           
 
           <div class="method-description">
             
-            <p>Fetches cache of <tt>_member</tt> from cache map.</p>
+            <p>Fetches cache of <tt>_member</tt> from cache map. TODO: Describe options.
+TODO: Describe timestamp features (we can pass methods or fields as
+timestamps too).</p>
+
+<pre>Or we can use define_timestamp +:expires_in =&gt; 20.hours+.</pre>
             
 
             
             <div class="method-source-code" id="fetch_cache_of-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 179</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">fetch_cache_of</span> <span class="ruby-identifier">_member</span>, <span class="ruby-identifier">cache_format</span> = <span class="ruby-value">:ehtml</span>, <span class="ruby-identifier">page_nr</span> = <span class="ruby-value">1</span>
-  <span class="ruby-constant">Rails</span>.<span class="ruby-identifier">cache</span>.<span class="ruby-identifier">fetch</span>(<span class="ruby-identifier">cache_key_of</span>(<span class="ruby-identifier">_member</span>, <span class="ruby-identifier">cache_format</span>, <span class="ruby-identifier">page_nr</span>)) { <span class="ruby-keyword">yield</span> }
+<span class="ruby-comment"># File lib/cache-machine.rb, line 206</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">fetch_cache_of</span> <span class="ruby-identifier">_member</span>, <span class="ruby-identifier">options</span> = {}
+  <span class="ruby-identifier">cache_key</span> = <span class="ruby-keyword">if</span> <span class="ruby-identifier">timestamp</span> = <span class="ruby-identifier">options</span>[<span class="ruby-value">:timestamp</span>]
+    <span class="ruby-comment"># Make key dependent on collection timestamp and optional timestamp.</span>
+    [<span class="ruby-identifier">timestamped_key_of</span>(<span class="ruby-identifier">_member</span>, <span class="ruby-identifier">options</span>), <span class="ruby-identifier">send</span>(<span class="ruby-identifier">timestamp</span>)].<span class="ruby-identifier">join</span> <span class="ruby-string">'_'</span>
+  <span class="ruby-keyword">else</span>
+    <span class="ruby-identifier">cache_key_of</span>(<span class="ruby-identifier">_member</span>, <span class="ruby-identifier">options</span>)
+  <span class="ruby-keyword">end</span>
+  <span class="ruby-constant">Rails</span>.<span class="ruby-identifier">cache</span>.<span class="ruby-identifier">fetch</span>(<span class="ruby-identifier">cache_key</span>, <span class="ruby-value">:expires_in</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">options</span>[<span class="ruby-value">:expires_in</span>]) { <span class="ruby-keyword">yield</span> }
 <span class="ruby-keyword">end</span></pre>
             </div><!-- fetch_cache_of-source -->
             
@@ -310,7 +321,7 @@ page with number <tt>page_nr</tt>.</p>
             
             <div class="method-source-code" id="reset_timestamp_of-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 211</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 249</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">reset_timestamp_of</span> <span class="ruby-identifier">anything</span>
   <span class="ruby-constant">Rails</span>.<span class="ruby-identifier">cache</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-identifier">timestamp_key_of</span> <span class="ruby-identifier">anything</span>)
 <span class="ruby-keyword">end</span></pre>
@@ -343,7 +354,7 @@ page with number <tt>page_nr</tt>.</p>
             
             <div class="method-source-code" id="timestamp_key_of-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 201</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 234</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">timestamp_key_of</span> <span class="ruby-identifier">anything</span>
   [<span class="ruby-keyword">self</span>, <span class="ruby-identifier">anything</span>, <span class="ruby-string">'timestamp'</span>].<span class="ruby-identifier">join</span> <span class="ruby-string">'_'</span>
 <span class="ruby-keyword">end</span></pre>
@@ -376,7 +387,7 @@ page with number <tt>page_nr</tt>.</p>
             
             <div class="method-source-code" id="timestamp_of-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 206</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 239</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">timestamp_of</span> <span class="ruby-identifier">anything</span>
   <span class="ruby-constant">Rails</span>.<span class="ruby-identifier">cache</span>.<span class="ruby-identifier">fetch</span>(<span class="ruby-identifier">timestamp_key_of</span> <span class="ruby-identifier">anything</span>) { <span class="ruby-constant">Time</span>.<span class="ruby-identifier">now</span>.<span class="ruby-identifier">to_i</span>.<span class="ruby-identifier">to_s</span> }
 <span class="ruby-keyword">end</span></pre>
@@ -388,6 +399,39 @@ page with number <tt>page_nr</tt>.</p>
 
           
         </div><!-- timestamp_of-method -->
+
+      
+        <div id="timestamped_key_of-method" class="method-detail ">
+          <a name="method-i-timestamped_key_of"></a>
+
+          
+          <div class="method-heading">
+            <span class="method-name">timestamped_key_of</span><span
+              class="method-args">(anything, options = {})</span>
+            <span class="method-click-advice">click to toggle source</span>
+          </div>
+          
+
+          <div class="method-description">
+            
+            <p>Returns cache key of <tt>anything</tt> with timestamp attached.</p>
+            
+
+            
+            <div class="method-source-code" id="timestamped_key_of-source">
+<pre>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 244</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">timestamped_key_of</span> <span class="ruby-identifier">anything</span>, <span class="ruby-identifier">options</span> = {}
+  [<span class="ruby-identifier">cache_key_of</span>(<span class="ruby-identifier">anything</span>, <span class="ruby-identifier">options</span>), <span class="ruby-identifier">timestamp_of</span>(<span class="ruby-identifier">anything</span>)].<span class="ruby-identifier">join</span> <span class="ruby-string">'_'</span>
+<span class="ruby-keyword">end</span></pre>
+            </div><!-- timestamped_key_of-source -->
+            
+          </div>
+
+          
+
+          
+        </div><!-- timestamped_key_of-method -->
 
       
       </div><!-- public-instance-method-details -->
@@ -416,7 +460,7 @@ Called only when <tt>has_many :through</tt> collection changed.</p>
             
             <div class="method-source-code" id="delete_association_cache_on-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 219</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 257</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">delete_association_cache_on</span> <span class="ruby-identifier">record</span>
   <span class="ruby-comment"># Find all associations with +record+ by its class.</span>
   <span class="ruby-identifier">associations</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">reflect_on_all_associations</span>.<span class="ruby-identifier">find_all</span> { <span class="ruby-operator">|</span><span class="ruby-identifier">association</span><span class="ruby-operator">|</span> <span class="ruby-identifier">association</span>.<span class="ruby-identifier">klass</span> <span class="ruby-operator">==</span> <span class="ruby-identifier">record</span>.<span class="ruby-identifier">class</span> }

@@ -61,9 +61,13 @@
           
           <li><a href="#method-i-reset_timestamp">#reset_timestamp</a></li>
           
+          <li><a href="#method-i-reset_timestamps">#reset_timestamps</a></li>
+          
           <li><a href="#method-i-timestamp">#timestamp</a></li>
           
           <li><a href="#method-i-timestamp_key">#timestamp_key</a></li>
+          
+          <li><a href="#method-i-timestamped_key">#timestamped_key</a></li>
           
         </ul>
       </div>
@@ -186,7 +190,7 @@ acts_as_cache_machine_for :mouses =&gt; :cats, :cats =&gt; [:gods, :bears], :god
             
             <div class="method-source-code" id="acts_as_cache_machine_for-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 74</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 78</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">acts_as_cache_machine_for</span> *<span class="ruby-identifier">associations</span>
   <span class="ruby-identifier">include</span> <span class="ruby-constant">ActiveRecord</span><span class="ruby-operator">::</span><span class="ruby-constant">CacheMachine</span><span class="ruby-operator">::</span><span class="ruby-constant">AssociatonMachine</span>
   <span class="ruby-identifier">cache_associated</span>(<span class="ruby-identifier">associations</span>)
@@ -220,7 +224,7 @@ acts_as_cache_machine_for :mouses =&gt; :cats, :cats =&gt; [:gods, :bears], :god
             
             <div class="method-source-code" id="reset_timestamp-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 90</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 99</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">reset_timestamp</span> <span class="ruby-identifier">format</span> = <span class="ruby-value">:ehtml</span>
   <span class="ruby-constant">Rails</span>.<span class="ruby-identifier">cache</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-identifier">timestamp_key</span> <span class="ruby-identifier">format</span>)
 <span class="ruby-keyword">end</span></pre>
@@ -232,6 +236,39 @@ acts_as_cache_machine_for :mouses =&gt; :cats, :cats =&gt; [:gods, :bears], :god
 
           
         </div><!-- reset_timestamp-method -->
+
+      
+        <div id="reset_timestamps-method" class="method-detail ">
+          <a name="method-i-reset_timestamps"></a>
+
+          
+          <div class="method-heading">
+            <span class="method-name">reset_timestamps</span><span
+              class="method-args">()</span>
+            <span class="method-click-advice">click to toggle source</span>
+          </div>
+          
+
+          <div class="method-description">
+            
+            
+            
+
+            
+            <div class="method-source-code" id="reset_timestamps-source">
+<pre>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 103</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">reset_timestamps</span>
+  <span class="ruby-constant">CACHE_FORMATS</span>.<span class="ruby-identifier">each</span> { <span class="ruby-operator">|</span><span class="ruby-identifier">format</span><span class="ruby-operator">|</span> <span class="ruby-identifier">reset_timestamp</span> <span class="ruby-identifier">format</span> }
+<span class="ruby-keyword">end</span></pre>
+            </div><!-- reset_timestamps-source -->
+            
+          </div>
+
+          
+
+          
+        </div><!-- reset_timestamps-method -->
 
       
         <div id="timestamp-method" class="method-detail ">
@@ -253,7 +290,7 @@ acts_as_cache_machine_for :mouses =&gt; :cats, :cats =&gt; [:gods, :bears], :god
             
             <div class="method-source-code" id="timestamp-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 80</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 84</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">timestamp</span> <span class="ruby-identifier">format</span> = <span class="ruby-value">:ehtml</span>
   <span class="ruby-constant">Rails</span>.<span class="ruby-identifier">cache</span>.<span class="ruby-identifier">fetch</span>(<span class="ruby-identifier">timestamp_key</span> <span class="ruby-identifier">format</span>) { <span class="ruby-constant">Time</span>.<span class="ruby-identifier">now</span>.<span class="ruby-identifier">to_i</span>.<span class="ruby-identifier">to_s</span> }
 <span class="ruby-keyword">end</span></pre>
@@ -286,7 +323,7 @@ acts_as_cache_machine_for :mouses =&gt; :cats, :cats =&gt; [:gods, :bears], :god
             
             <div class="method-source-code" id="timestamp_key-source">
 <pre>
-<span class="ruby-comment"># File lib/cache-machine.rb, line 85</span>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 89</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">timestamp_key</span> <span class="ruby-identifier">format</span> = <span class="ruby-value">:ehtml</span>
   [<span class="ruby-keyword">self</span>.<span class="ruby-identifier">name</span>, <span class="ruby-identifier">format</span>, <span class="ruby-string">'timestamp'</span>].<span class="ruby-identifier">join</span> <span class="ruby-string">'_'</span>
 <span class="ruby-keyword">end</span></pre>
@@ -298,6 +335,39 @@ acts_as_cache_machine_for :mouses =&gt; :cats, :cats =&gt; [:gods, :bears], :god
 
           
         </div><!-- timestamp_key-method -->
+
+      
+        <div id="timestamped_key-method" class="method-detail ">
+          <a name="method-i-timestamped_key"></a>
+
+          
+          <div class="method-heading">
+            <span class="method-name">timestamped_key</span><span
+              class="method-args">(format = :ehtml)</span>
+            <span class="method-click-advice">click to toggle source</span>
+          </div>
+          
+
+          <div class="method-description">
+            
+            <p>Returns cache key of <tt>anything</tt> with timestamp attached.</p>
+            
+
+            
+            <div class="method-source-code" id="timestamped_key-source">
+<pre>
+<span class="ruby-comment"># File lib/cache-machine.rb, line 94</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">timestamped_key</span> <span class="ruby-identifier">format</span> = <span class="ruby-value">:ehtml</span>
+  [<span class="ruby-identifier">timestamp_key</span>(<span class="ruby-identifier">format</span>), <span class="ruby-identifier">timestamp</span>(<span class="ruby-identifier">format</span>)].<span class="ruby-identifier">join</span> <span class="ruby-string">'_'</span>
+<span class="ruby-keyword">end</span></pre>
+            </div><!-- timestamped_key-source -->
+            
+          </div>
+
+          
+
+          
+        </div><!-- timestamped_key-method -->
 
       
       </div><!-- public-instance-method-details -->
