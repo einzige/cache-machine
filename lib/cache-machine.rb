@@ -41,6 +41,7 @@
 # [Use timestamps] <tt>Rails.cache.fetch("upcoming_events_#{@city.timestamp_of :upcoming_events}_11/11/11-12/12/12")</tt>
 #
 # +timestamp_of+ generates timestamp for you. This timestamp changes on any change in _upcoming_events_ collection.
+# TODO: write more. We have a lot of features for timestamps.
 #
 # === Timestamps as cache keys on ActiveRecord classes:
 #
@@ -56,7 +57,10 @@ module ActiveRecord
     # Supported cache formats. You can add your own.
     CACHE_FORMATS = [:ehtml, :json, :xml]
 
-    included { after_save { self.class.reset_timestamp } }
+    included do
+      after_save { self.class.reset_timestamps }
+      after_destroy { self.class.reset_timestamps }
+    end
 
     module ClassMethods
       # Initializes tracking associations to write and reset cache.
@@ -86,9 +90,18 @@ module ActiveRecord
         [self.name, format, 'timestamp'].join '_'
       end
 
+      # Returns cache key of +anything+ with timestamp attached.
+      def timestamped_key format = :ehtml
+        [timestamp_key(format), timestamp(format)].join '_'
+      end
+
       # Resets timestamp of class collection.
       def reset_timestamp format = :ehtml
         Rails.cache.delete(timestamp_key format)
+      end
+
+      def reset_timestamps
+        CACHE_FORMATS.each { |format| reset_timestamp format }
       end
     end
 
@@ -107,6 +120,16 @@ module ActiveRecord
         def cache_associated associations
           [*associations].each do |association|
             self.cache_map.merge! association.is_a?(Hash) ? association : {association => []}
+          end
+        end
+
+        # Defines timestamp for object.
+        def define_timestamp timestamp_name, options = {}
+          define_method timestamp_name do
+            fetch_cache_of(timestamp_name, options) do
+              delete_cache_of timestamp_name
+              Time.now.to_i.to_s
+            end
           end
         end
 
@@ -170,14 +193,24 @@ module ActiveRecord
       end
 
       module InstanceMethods
-        # Returns cache key of +_member+ with given +cache_format+ on page with number +page_nr+.
-        def cache_key_of _member, cache_format = :ehtml, page_nr = 1
-          [self.class.name, self.to_param, _member, cache_format, page_nr].join '_'
+        # Returns cache key of +_member+.
+        # TODO: describe options.
+        def cache_key_of _member, options = {}
+          [self.class.name, self.to_param, _member, options[:format] || :ehtml, options[:page] || 1].join '_'
         end
 
         # Fetches cache of +_member+ from cache map.
-        def fetch_cache_of _member, cache_format = :ehtml, page_nr = 1
-          Rails.cache.fetch(cache_key_of(_member, cache_format, page_nr)) { yield }
+        # TODO: Describe options.
+        # TODO: Describe timestamp features (we can pass methods or fields as timestamps too).
+        #       Or we can use define_timestamp +:expires_in => 20.hours+.
+        def fetch_cache_of _member, options = {}
+          cache_key = if timestamp = options[:timestamp]
+            # Make key dependent on collection timestamp and optional timestamp.
+            [timestamped_key_of(_member, options), send(timestamp)].join '_'
+          else
+            cache_key_of(_member, options)
+          end
+          Rails.cache.fetch(cache_key, :expires_in => options[:expires_in]) { yield }
         end
 
         # Recursively deletes cache by map for +_member+.
@@ -192,7 +225,7 @@ module ActiveRecord
         def delete_cache_of_only _member
           ActiveRecord::CacheMachine::CACHE_FORMATS.each do |cache_format|
             page_nr = 0
-            while Rails.cache.delete(cache_key_of(_member, cache_format, page_nr += 1)); end
+            while Rails.cache.delete(cache_key_of(_member, {:format => cache_format, :page => page_nr += 1})); end
           end
           reset_timestamp_of _member
         end
@@ -205,6 +238,11 @@ module ActiveRecord
         # Returns timestamp of +anything+ from memcached.
         def timestamp_of anything
           Rails.cache.fetch(timestamp_key_of anything) { Time.now.to_i.to_s }
+        end
+
+        # Returns cache key of +anything+ with timestamp attached.
+        def timestamped_key_of anything, options = {}
+          [cache_key_of(anything, options), timestamp_of(anything)].join '_'
         end
 
         # Deletes cache of +anything+ from memory.
