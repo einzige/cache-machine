@@ -234,7 +234,7 @@ module ActiveRecord
 
         # Returns timestamp cache key for +anything+.
         def timestamp_key_of anything
-          [self.to_param, anything, 'timestamp'].join '_'
+          [self.class.name, self.to_param, anything, 'timestamp'].join '_'
         end
 
         # Returns timestamp of +anything+ from memcached.
