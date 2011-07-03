@@ -55,7 +55,7 @@ module ActiveRecord
     extend ActiveSupport::Concern
 
     # Supported cache formats. You can add your own.
-    CACHE_FORMATS = [:ehtml, :json, :xml]
+    CACHE_FORMATS = [:html, :ehtml, :json, :xml]
 
     included do
       after_save { self.class.reset_timestamps }
