@@ -79,7 +79,7 @@ describe ActiveRecord::CacheMachine do
   subject { Cacher.create(:name => 'foo') }
 
   it "generates association cache keys" do
-    subject.cache_key_of(:has_many_cacheables).should eql("Cacher_foo_has_many_cacheables_ehtml_1")
+    subject.cache_key_of(:has_many_cacheables, :format => :ehtml).should eql("Cacher_foo_has_many_cacheables_ehtml_1")
   end
 
   it "stores association cache" do

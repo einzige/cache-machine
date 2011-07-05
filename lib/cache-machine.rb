@@ -55,7 +55,7 @@ module ActiveRecord
     extend ActiveSupport::Concern
 
     # Supported cache formats. You can add your own.
-    CACHE_FORMATS = [:ehtml, :json, :xml]
+    CACHE_FORMATS = [nil, :ehtml, :json, :xml]
 
     included do
       after_save { self.class.reset_timestamps }
@@ -198,7 +198,7 @@ module ActiveRecord
         # Returns cache key of +_member+.
         # TODO: describe options.
         def cache_key_of _member, options = {}
-          [self.class.name, self.to_param, _member, options[:format] || :ehtml, options[:page] || 1].join '_'
+          [self.class.name, self.to_param, _member, options[:format], options[:page] || 1].compact.join '_'
         end
 
         # Fetches cache of +_member+ from cache map.
