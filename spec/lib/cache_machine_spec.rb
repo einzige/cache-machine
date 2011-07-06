@@ -9,6 +9,7 @@ describe ActiveRecord::CacheMachine do
   HMT_JOINS_TABLE_NAME = "joins"
   HMT_TABLE_NAME = "has_many_through_cacheables"
   HO_TABLE_NAME = "hs_one_cacheables"
+  POLY_TABLE_NAME = "polymorphics"
   TARGET_ASSOCIATION_NAME = TARGET_TABLE_NAME.singularize
   HMT_ASSOCIATION_NAME = HMT_TABLE_NAME.singularize
 
@@ -19,11 +20,13 @@ describe ActiveRecord::CacheMachine do
       create_table(HM_TABLE_NAME) { |t| t.references TARGET_ASSOCIATION_NAME }
       create_table(HMT_TABLE_NAME)
       create_table(HMT_JOINS_TABLE_NAME) { |t| [TARGET_ASSOCIATION_NAME, HMT_ASSOCIATION_NAME].each &t.method(:references) }
+      create_table(POLY_TABLE_NAME) { |t| t.references(:polymorhicable); t.string(:polymorhicable_type) }
       create_table(TARGET_TABLE_NAME) { |t| t.string :name }
       create_table(HABTM_JOINS_TABLE_NAME, :id => false) { |t| [TARGET_ASSOCIATION_NAME, HABTM_ASSOCIATION_NAME].each &t.method(:references) }
     end
 
     def self.down
+      drop_table POLY_TABLE_NAME if ActiveRecord::Base.connection.tables.include? POLY_TABLE_NAME
       drop_table TARGET_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(TARGET_TABLE_NAME)
       drop_table HABTM_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HABTM_TABLE_NAME)
       drop_table HM_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HM_TABLE_NAME)
@@ -61,10 +64,17 @@ describe ActiveRecord::CacheMachine do
     has_and_belongs_to_many :cachers, :class_name => 'Cacher'
   end
 
+  class Polymorphic < ActiveRecord::Base
+    set_table_name POLY_TABLE_NAME
+
+    belongs_to :polymorhicable, :polymorphic => true
+  end
+
   class Cacher < ActiveRecord::Base
     set_table_name TARGET_TABLE_NAME
 
-    acts_as_cache_machine_for :has_many_cacheables => :dependent_cache,
+    acts_as_cache_machine_for :polymorphics,
+                              :has_many_cacheables => :dependent_cache,
                               :has_many_through_cacheables => :dependent_cache,
                               :has_and_belongs_to_many_cacheables => :dependent_cache
 
@@ -72,6 +82,7 @@ describe ActiveRecord::CacheMachine do
     has_many :has_many_cacheables, :class_name => 'HasManyCacheable'
     has_many :joins, :class_name => 'Join'
     has_many :has_many_through_cacheables, :through => :joins, :class_name => 'HasManyThroughCacheable'
+    has_many :polymorphics, :as => :polymorhicable
 
     def to_param; name end
   end
@@ -89,6 +100,20 @@ describe ActiveRecord::CacheMachine do
   end
 
   describe "deletes cache" do
+
+    context "polymorphics" do
+      it "resets cache if polymorphically associated record is saved" do
+        polymorphic = subject.polymorphics.create
+        cached_result = subject.fetch_cache_of(:polymorphics, :format => :json) { 'cached json' }
+        cached_result.should eql('cached json')
+
+        polymorphic.save
+
+        cached_result = subject.fetch_cache_of(:polymorphics, :format => :json) { 'new cached json' }
+        cached_result.should eql('new cached json')
+      end
+    end
+
     context "of any member on has_many" do
       before :each do
         @existing_entry = subject.has_many_cacheables.create
