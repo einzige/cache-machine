@@ -9,10 +9,10 @@
 # === EXAMPLES
 #
 #   # Fetch cache of venues collection on model_instance.
-#   @model_instance.fetch_cache_of :venues              { @neighborhood.venues.to_html }
+#   @model_instance.fetch_cache_of :venues { @neighborhood.venues.to_html }
 #
 #   # Specify format.
-#   @model_instance.fetch_cache_of :venues, :json       { @neighborhood.venues.to_json }
+#   @model_instance.fetch_cache_of :venues, :json { @neighborhood.venues.to_json }
 #
 #   # Paginated content.
 #   @model_instance.fetch_cache_of :venues, :json, page { @neighborhood.venues.to_json }
@@ -55,7 +55,7 @@ module ActiveRecord
     extend ActiveSupport::Concern
 
     # Supported cache formats. You can add your own.
-    CACHE_FORMATS = [:html, :ehtml, :json, :xml]
+    CACHE_FORMATS = [nil, :ehtml, :html, :json, :xml]
 
     included do
       after_save { self.class.reset_timestamps }
@@ -126,8 +126,10 @@ module ActiveRecord
         # Defines timestamp for object.
         def define_timestamp timestamp_name, options = {}
           define_method timestamp_name do
-            fetch_cache_of(timestamp_name, options) do
-              delete_cache_of timestamp_name
+            _timestamp_key = self.timestamp_key_of(timestamp_name)
+
+            fetch_cache_of(_timestamp_key, options) do
+              delete_cache_of _timestamp_key # Case when cache expired by time.
               Time.now.to_i.to_s
             end
           end
@@ -196,7 +198,7 @@ module ActiveRecord
         # Returns cache key of +_member+.
         # TODO: describe options.
         def cache_key_of _member, options = {}
-          [self.class.name, self.to_param, _member, options[:format] || :ehtml, options[:page] || 1].join '_'
+          [self.class.name, self.to_param, _member, options[:format], options[:page] || 1].compact.join '_'
         end
 
         # Fetches cache of +_member+ from cache map.
@@ -210,7 +212,8 @@ module ActiveRecord
           else
             cache_key_of(_member, options)
           end
-          Rails.cache.fetch(cache_key, :expires_in => options[:expires_in]) { yield }
+          expires_in = options[:expires_at] ? options[:expires_at] - Time.now : options[:expires_in]
+          Rails.cache.fetch(cache_key, :expires_in => expires_in) { yield }
         end
 
         # Recursively deletes cache by map for +_member+.
@@ -232,7 +235,7 @@ module ActiveRecord
 
         # Returns timestamp cache key for +anything+.
         def timestamp_key_of anything
-          [self, anything, 'timestamp'].join '_'
+          [self.class.name, self.to_param, anything, 'timestamp'].join '_'
         end
 
         # Returns timestamp of +anything+ from memcached.

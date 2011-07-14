@@ -26,10 +26,11 @@ Jeweler::Tasks.new do |gem|
   gem.name = "cache-machine"
   gem.homepage = "http://github.com/partyearth/cache-machine"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of our gem}
-  gem.description = %Q{TODO: longer description of our gem}
+  gem.summary = %Q{A Ruby on Rails framework to support cache management based on explicitely modeled caching dependencies.}
+  gem.description = %Q{Longer description of our gem}
   gem.email = "kgoslar@partyearth.ru"
   gem.authors = ["Kevin Goslar"]
+  gem.files = Dir.glob('lib/**/*.rb')
   # dependencies defined in Gemfile
 end
 Jeweler::RubygemsDotOrgTasks.new
@@ -65,3 +66,4 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
+
