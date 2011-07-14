@@ -212,7 +212,19 @@ module ActiveRecord
           else
             cache_key_of(_member, options)
           end
-          expires_in = options[:expires_at] ? options[:expires_at] - Time.now : options[:expires_in]
+
+          expires_in = if expires_at = options[:expires_at]
+            if expires_at.is_a? Time
+              options[:expires_at] - Time.now
+            elsif expires_at.is_a? Proc
+              options[:expires_at].call - Time.now
+            else
+              raise ArgumentError, "expires_at is not a Time"
+            end
+          else
+            options[:expires_in]
+          end
+
           Rails.cache.fetch(cache_key, :expires_in => expires_in) { yield }
         end
 
