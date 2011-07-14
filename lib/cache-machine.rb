@@ -55,7 +55,7 @@ module ActiveRecord
     extend ActiveSupport::Concern
 
     # Supported cache formats. You can add your own.
-    CACHE_FORMATS = [nil, :ehtml, :json, :xml]
+    CACHE_FORMATS = [nil, :ehtml, :html, :json, :xml]
 
     included do
       after_save { self.class.reset_timestamps }
@@ -212,7 +212,8 @@ module ActiveRecord
           else
             cache_key_of(_member, options)
           end
-          Rails.cache.fetch(cache_key, :expires_in => options[:expires_in]) { yield }
+          expires_in = options[:expires_at] ? options[:expires_at] - Time.now : options[:expires_in]
+          Rails.cache.fetch(cache_key, :expires_in => expires_in) { yield }
         end
 
         # Recursively deletes cache by map for +_member+.
