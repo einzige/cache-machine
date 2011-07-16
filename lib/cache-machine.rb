@@ -126,10 +126,8 @@ module ActiveRecord
         # Defines timestamp for object.
         def define_timestamp timestamp_name, options = {}
           define_method timestamp_name do
-            _timestamp_key = self.timestamp_key_of(timestamp_name)
-
-            fetch_cache_of(_timestamp_key, options) do
-              delete_cache_of _timestamp_key # Case when cache expired by time.
+            fetch_cache_of(timestamp_key_of(timestamp_name), options) do
+              delete_cache_of timestamp_name # Case when cache expired by time.
               Time.now.to_i.to_s
             end
           end
