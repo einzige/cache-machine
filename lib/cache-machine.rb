@@ -81,22 +81,22 @@ module ActiveRecord
       end
 
       # Returns timestamp of class collection.
-      def timestamp format = :ehtml
+      def timestamp format = nil
         Rails.cache.fetch(timestamp_key format) { Time.now.to_i.to_s }
       end
 
       # Returns cache key to fetch timestamp from memcached.
-      def timestamp_key format = :ehtml
+      def timestamp_key format = nil
         [self.name, format, 'timestamp'].join '_'
       end
 
       # Returns cache key of +anything+ with timestamp attached.
-      def timestamped_key format = :ehtml
+      def timestamped_key format = nil
         [timestamp_key(format), timestamp(format)].join '_'
       end
 
       # Resets timestamp of class collection.
-      def reset_timestamp format = :ehtml
+      def reset_timestamp format = nil
         Rails.cache.delete(timestamp_key format)
       end
 
