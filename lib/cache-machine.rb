@@ -215,7 +215,7 @@ module ActiveRecord
             expires_at = expires_at.call if expires_at.kind_of? Proc
 
             if expires_at.kind_of? Time
-              options[:expires_at] - Time.now
+              expires_at - Time.now
             else
               raise ArgumentError, "expires_at is not a Time"
             end
