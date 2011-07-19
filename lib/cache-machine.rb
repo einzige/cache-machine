@@ -206,16 +206,16 @@ module ActiveRecord
         def fetch_cache_of _member, options = {}
           cache_key = if timestamp = options[:timestamp]
             # Make key dependent on collection timestamp and optional timestamp.
-            [timestamped_key_of(_member, options), send(timestamp)].join '_'
+            [timestamped_key_of(_member, options), send(timestamp.kind_of?(Proc) ? timestamp.call : timestamp)].join '_'
           else
             cache_key_of(_member, options)
           end
 
           expires_in = if expires_at = options[:expires_at]
-            if expires_at.is_a? Time
+            expires_at = expires_at.call if expires_at.kind_of? Proc
+
+            if expires_at.kind_of? Time
               options[:expires_at] - Time.now
-            elsif expires_at.is_a? Proc
-              options[:expires_at].call - Time.now
             else
               raise ArgumentError, "expires_at is not a Time"
             end
