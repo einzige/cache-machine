@@ -206,7 +206,7 @@ module ActiveRecord
         def fetch_cache_of _member, options = {}
           cache_key = if timestamp = options[:timestamp]
             # Make key dependent on collection timestamp and optional timestamp.
-            [timestamped_key_of(_member, options), send(timestamp.kind_of?(Proc) ? timestamp.call : timestamp)].join '_'
+            [timestamped_key_of(_member, options), timestamp.to_proc.call(self)].join '_'
           else
             cache_key_of(_member, options)
           end
