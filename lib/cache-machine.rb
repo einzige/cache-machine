@@ -186,8 +186,10 @@ module ActiveRecord
                 reflection.klass.before_destroy { target_class.delete_association_cache_on self, association_id }
               else
                 # If association is _has_many_ or _has_one_ it should reset its cache for associated object with class +target_class+.
-                reflection.klass.after_save     { target_class.find_by_id(send(reflection.options[:primary_key] || reflection.primary_key_name)).try(:delete_cache_of, association_id) }
-                reflection.klass.before_destroy { target_class.find_by_id(send(reflection.options[:primary_key] || reflection.primary_key_name)).try(:delete_cache_of, association_id) }
+                reflection.klass.after_save     { target_class.where((reflection.options[:foreign_key] || :id) =>
+                                                                 send(reflection.options[:primary_key] || reflection.primary_key_name)).first.try(:delete_cache_of, association_id) }
+                reflection.klass.before_destroy { target_class.where((reflection.options[:foreign_key] || :id) =>
+                                                                 send(reflection.options[:primary_key] || reflection.primary_key_name)).first.try(:delete_cache_of, association_id) }
               end
             end
           end
