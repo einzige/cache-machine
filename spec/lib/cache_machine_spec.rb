@@ -21,7 +21,7 @@ describe ActiveRecord::CacheMachine do
       create_table(HMT_TABLE_NAME)
       create_table(HMT_JOINS_TABLE_NAME) { |t| [TARGET_ASSOCIATION_NAME, HMT_ASSOCIATION_NAME].each &t.method(:references) }
       create_table(POLY_TABLE_NAME) { |t| t.references(:polymorhicable); t.string(:polymorhicable_type) }
-      create_table(TARGET_TABLE_NAME) { |t| t.string :name }
+      create_table(TARGET_TABLE_NAME) { |t| t.string :name; t.integer(:parent_id) }
       create_table(HABTM_JOINS_TABLE_NAME, :id => false) { |t| [TARGET_ASSOCIATION_NAME, HABTM_ASSOCIATION_NAME].each &t.method(:references) }
     end
 
@@ -40,7 +40,6 @@ describe ActiveRecord::CacheMachine do
 
   class HasManyCacheable < ActiveRecord::Base
     set_table_name HM_TABLE_NAME
-
     belongs_to :cacher, :class_name => 'Cacher'
   end
 
@@ -60,13 +59,11 @@ describe ActiveRecord::CacheMachine do
 
   class HasAndBelongsToManyCacheable < ActiveRecord::Base
     set_table_name HABTM_TABLE_NAME
-
     has_and_belongs_to_many :cachers, :class_name => 'Cacher'
   end
 
   class Polymorphic < ActiveRecord::Base
     set_table_name POLY_TABLE_NAME
-
     belongs_to :polymorhicable, :polymorphic => true
   end
 
@@ -74,6 +71,7 @@ describe ActiveRecord::CacheMachine do
     set_table_name TARGET_TABLE_NAME
 
     acts_as_cache_machine_for :polymorphics,
+                              :child_cachers,
                               :has_many_cacheables => :dependent_cache,
                               :has_many_through_cacheables => :dependent_cache,
                               :has_and_belongs_to_many_cacheables => :dependent_cache
@@ -83,6 +81,7 @@ describe ActiveRecord::CacheMachine do
     has_many :joins, :class_name => 'Join'
     has_many :has_many_through_cacheables, :through => :joins, :class_name => 'HasManyThroughCacheable'
     has_many :polymorphics, :as => :polymorhicable
+    has_many :child_cachers, :class_name => 'Cacher', :foreign_key => 'id', :primary_key => 'parent_id'
 
     def to_param; name end
   end
@@ -101,16 +100,23 @@ describe ActiveRecord::CacheMachine do
 
   describe "deletes cache" do
 
-    context "polymorphics" do
-      it "resets cache if polymorphically associated record is saved" do
-        polymorphic = subject.polymorphics.create
-        cached_result = subject.fetch_cache_of(:polymorphics, :format => :json) { 'cached json' }
-        cached_result.should eql('cached json')
+    context "of polymorphic associations" do
+      it "works" do
+        cached_result = subject.fetch_cache_of(:polymorphics) { 'cache' }
+        subject.polymorphics.create
+        cached_result = subject.fetch_cache_of(:polymorphics) { 'new cache' }
 
-        polymorphic.save
+        cached_result.should eql('new cache')
+      end
+    end
 
-        cached_result = subject.fetch_cache_of(:polymorphics, :format => :json) { 'new cached json' }
-        cached_result.should eql('new cached json')
+    context "of self-join association" do
+      it "works" do
+        subject.fetch_cache_of(:child_cachers) { 'cache' }
+        child = Cacher.create(:parent_id => subject.id)
+        cached_result = subject.fetch_cache_of(:child_cachers) { 'new cache' }
+
+        cached_result.should eql('new cache')
       end
     end
 
