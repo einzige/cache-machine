@@ -81,7 +81,7 @@ describe ActiveRecord::CacheMachine do
     has_many :joins, :class_name => 'Join'
     has_many :has_many_through_cacheables, :through => :joins, :class_name => 'HasManyThroughCacheable'
     has_many :polymorphics, :as => :polymorhicable
-    has_many :child_cachers, :class_name => 'Cacher', :foreign_key => 'id', :primary_key => 'parent_id'
+    has_many :child_cachers, :class_name => 'Cacher', :foreign_key => 'parent_id', :primary_key => 'id'
 
     def to_param; name end
   end
@@ -93,9 +93,9 @@ describe ActiveRecord::CacheMachine do
   end
 
   it "stores association cache" do
-    subject.fetch_cache_of(:has_many_cacheables) { 'cached ehtml' }
-    cached_result = subject.fetch_cache_of(:has_many_cacheables) { 'new cached ehtml' }
-    cached_result.should eql('cached ehtml')
+    subject.fetch_cache_of(:has_many_cacheables) { 'cache' }
+    cached_result = subject.fetch_cache_of(:has_many_cacheables) { 'fresh cache' }
+    cached_result.should eql('cache')
   end
 
   describe "deletes cache" do
@@ -124,12 +124,12 @@ describe ActiveRecord::CacheMachine do
       before :each do
         @existing_entry = subject.has_many_cacheables.create
         @new_entry = HasManyCacheable.create
-        subject.fetch_cache_of(:has_many_cacheables) { 'cached ehtml' }
+        subject.fetch_cache_of(:has_many_cacheables) { 'cache' }
       end
 
       after :each do
-        cached_result = subject.fetch_cache_of(:has_many_cacheables) { 'new cached ehtml' }
-        cached_result.should eql('new cached ehtml')
+        cached_result = subject.fetch_cache_of(:has_many_cacheables) { 'fresh cache' }
+        cached_result.should eql('fresh cache')
         subject.delete_cache_of(:has_many_cacheables)
       end
 
@@ -141,9 +141,9 @@ describe ActiveRecord::CacheMachine do
 
       context "by chain" do
         it "works" do
-          subject.fetch_cache_of(:dependent_cache) { 'cached ehtml' }
+          subject.fetch_cache_of(:dependent_cache) { 'cache' }
           subject.has_many_cacheables.create
-          subject.fetch_cache_of(:dependent_cache) { 'new cached ehtml' }.should eql('new cached ehtml')
+          subject.fetch_cache_of(:dependent_cache) { 'fresh cache' }.should eql('fresh cache')
         end
       end
     end
@@ -152,12 +152,12 @@ describe ActiveRecord::CacheMachine do
       before :each do
         @existing_entry = subject.has_many_through_cacheables.create
         @new_entry = HasManyThroughCacheable.create
-        subject.fetch_cache_of(:has_many_through_cacheables) { 'cached ehtml' }
+        subject.fetch_cache_of(:has_many_through_cacheables) { 'cache' }
       end
 
       after :each do
-        cached_result = subject.fetch_cache_of(:has_many_through_cacheables) { 'new cached ehtml' }
-        cached_result.should eql('new cached ehtml')
+        cached_result = subject.fetch_cache_of(:has_many_through_cacheables) { 'fresh cache' }
+        cached_result.should eql('fresh cache')
         subject.delete_cache_of(:has_many_through_cacheables)
       end
 
@@ -169,9 +169,9 @@ describe ActiveRecord::CacheMachine do
 
       context "by chain" do
         it "works" do
-          subject.fetch_cache_of(:dependent_cache) { 'cached ehtml' }
+          subject.fetch_cache_of(:dependent_cache) { 'cache' }
           subject.has_many_through_cacheables.create
-          subject.fetch_cache_of(:dependent_cache) { 'new cached ehtml' }.should eql('new cached ehtml')
+          subject.fetch_cache_of(:dependent_cache) { 'fresh cache' }.should eql('fresh cache')
         end
       end
     end
@@ -180,12 +180,12 @@ describe ActiveRecord::CacheMachine do
       before :each do
         @existing_entry = subject.has_and_belongs_to_many_cacheables.create
         @new_entry = HasAndBelongsToManyCacheable.create
-        subject.fetch_cache_of(:has_and_belongs_to_many_cacheables) { 'cached ehtml' }
+        subject.fetch_cache_of(:has_and_belongs_to_many_cacheables) { 'cache' }
       end
 
       after :each do
-        cached_result = subject.fetch_cache_of(:has_and_belongs_to_many_cacheables) { 'new cached ehtml' }
-        cached_result.should eql('new cached ehtml')
+        cached_result = subject.fetch_cache_of(:has_and_belongs_to_many_cacheables) { 'fresh cache' }
+        cached_result.should eql('fresh cache')
         subject.delete_cache_of(:has_and_belongs_to_many_cacheables)
       end
 
@@ -197,9 +197,9 @@ describe ActiveRecord::CacheMachine do
 
       context "by chain" do
         it "works" do
-          subject.fetch_cache_of(:dependent_cache) { 'cached ehtml' }
+          subject.fetch_cache_of(:dependent_cache) { 'cache' }
           subject.has_and_belongs_to_many_cacheables.create
-          subject.fetch_cache_of(:dependent_cache) { 'new cached ehtml' }.should eql('new cached ehtml')
+          subject.fetch_cache_of(:dependent_cache) { 'fresh cache' }.should eql('fresh cache')
         end
       end
     end
