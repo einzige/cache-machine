@@ -76,10 +76,10 @@ module ActiveRecord
       #   # Cache and expire dependent collections (_mouse_ change invalidates all other collection caches by chain)
       #   acts_as_cache_machine_for :mouses => :cats, :cats => [:gods, :bears], :gods, :bears
       def acts_as_cache_machine_for *associations
+        puts "CACHE_MACHINE init"
         include ActiveRecord::CacheMachine::AssociatonMachine
         cache_associated(associations)
       end
-
       # Returns timestamp of class collection.
       def timestamp format = nil
         Rails.cache.fetch(timestamp_key format) { Time.now.to_i.to_s }
@@ -97,7 +97,9 @@ module ActiveRecord
 
       # Resets timestamp of class collection.
       def reset_timestamp format = nil
-        Rails.cache.delete(timestamp_key format)
+        cache_key = timestamp_key format
+        puts "CACHE_MACHINE: reset_timestamp: deleting #{timestamp_key} with format #{format}"
+        Rails.cache.delete(cache_key)
       end
 
       def reset_timestamps
@@ -127,6 +129,7 @@ module ActiveRecord
         def define_timestamp timestamp_name, options = {}
           define_method timestamp_name do
             fetch_cache_of(timestamp_key_of(timestamp_name), options) do
+              puts "CACHE_MACHINE: define_timestamp: deleting #{timestamp_name}"
               delete_cache_of timestamp_name # Case when cache expired by time.
               Time.now.to_i.to_s
             end
@@ -241,7 +244,9 @@ module ActiveRecord
         def delete_cache_of_only _member
           ActiveRecord::CacheMachine::CACHE_FORMATS.each do |cache_format|
             page_nr = 0
-            while Rails.cache.delete(cache_key_of(_member, {:format => cache_format, :page => page_nr += 1})); end
+            var cache_key = cache_key_of(_member, {:format => cache_format, :page => page_nr += 1})
+            puts "CACHE_MACHINE: delete_cache_of_only: deleting #{cache_key}"
+            while Rails.cache.delete(cache_key); end
           end
           reset_timestamp_of _member
         end
@@ -263,7 +268,9 @@ module ActiveRecord
 
         # Deletes cache of +anything+ from memory.
         def reset_timestamp_of anything
-          Rails.cache.delete(timestamp_key_of anything)
+          cache_key = timestamp_key_of anything
+          puts "CACHE_MACHINE: reset_timestamp_of: deleting #{cache_key}"
+          Rails.cache.delete(cache_key)
         end
 
         protected
