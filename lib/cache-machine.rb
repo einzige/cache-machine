@@ -244,7 +244,7 @@ module ActiveRecord
         def delete_cache_of_only _member
           ActiveRecord::CacheMachine::CACHE_FORMATS.each do |cache_format|
             page_nr = 0
-            var cache_key = cache_key_of(_member, {:format => cache_format, :page => page_nr += 1})
+            cache_key = cache_key_of(_member, {:format => cache_format, :page => page_nr += 1})
             puts "CACHE_MACHINE: delete_cache_of_only: deleting #{cache_key}"
             while Rails.cache.delete(cache_key); end
           end
