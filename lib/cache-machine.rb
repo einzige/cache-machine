@@ -185,7 +185,7 @@ module ActiveRecord
           # Ensure what collection should be tracked.
           if (should_be_on_hook = self.cache_map.keys.include?(association_id)) && options[:through]
             # If relation is _many_to_many_ track collection changes.
-            options[:before_add] = \
+            options[:after_add] = \
             options[:before_remove] = :delete_association_cache_on
           end
           super
@@ -197,7 +197,7 @@ module ActiveRecord
           # Ensure what collection should be tracked.
           if(should_be_on_hook = self.cache_map.keys.include?(association_id))
             # If relation is _many_to_many_ track collection changes.
-            options[:before_add] = \
+            options[:after_add] = \
             options[:before_remove] = :delete_association_cache_on
           end
           super
