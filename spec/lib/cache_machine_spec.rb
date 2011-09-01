@@ -110,6 +110,20 @@ describe ActiveRecord::CacheMachine do
       end
     end
 
+    context "of paginated content" do
+      before :each do
+        subject.delete_cache_of :has_many_cacheables
+      end
+
+      it "works" do
+        subject.fetch_cache_of(:has_many_cacheables, :page => 1) { 'page 1' }.should eql('page 1')
+        subject.fetch_cache_of(:has_many_cacheables, :page => 2) { 'page 2' }.should eql('page 2')
+        subject.delete_cache_of(:has_many_cacheables)
+        subject.fetch_cache_of(:has_many_cacheables, :page => 1) { 'fresh page 1' }.should eql('fresh page 1')
+        subject.fetch_cache_of(:has_many_cacheables, :page => 2) { 'fresh page 2' }.should eql('fresh page 2')
+      end
+    end
+
     context "of self-join association" do
       it "works" do
         subject.fetch_cache_of(:child_cachers) { 'cache' }
