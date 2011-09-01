@@ -168,14 +168,10 @@ module ActiveRecord
 
         # Deletes cache of collection with name +association_id+ for each object associated with +record+
         # Called only when <tt>has_many :through</tt> collection changed.
-        def delete_association_cache_on record, association_id
-          # Find all associations  between +record+ class and current class.
-          associations = record.class.reflect_on_all_associations.find_all { |association| association.klass == self }
-          associations.each do |association|
-            record.send(association.name).reload.each do |cache_source_record|
-              # Reset cache of association with name +association_id+ for each object associated with +record+.
-              cache_source_record.delete_cache_of association_id
-            end
+        def delete_association_cache_on record, reflection
+          pk = record.class.primary_key
+          self.joins(reflection.name).where(reflection.table_name => { pk => record.send(pk) }).each do |cache_source_record|
+            cache_source_record.delete_cache_of reflection.name
           end
         end
 
@@ -211,12 +207,12 @@ module ActiveRecord
             case (reflection = (target_class = self).reflect_on_association association_id)
             when ActiveRecord::Reflection::ThroughReflection
               # If association is _many_to_many_ it should reset its cache for all associated objects with class +target_class+.
-              reflection.klass.after_save     { target_class.delete_association_cache_on self, association_id }
-              reflection.klass.before_destroy { target_class.delete_association_cache_on self, association_id }
+              reflection.klass.after_save     { target_class.delete_association_cache_on self, reflection }
+              reflection.klass.before_destroy { target_class.delete_association_cache_on self, reflection }
             when ActiveRecord::Reflection::AssociationReflection
               if reflection.macro == :has_and_belongs_to_many
-                reflection.klass.after_save     { target_class.delete_association_cache_on self, association_id }
-                reflection.klass.before_destroy { target_class.delete_association_cache_on self, association_id }
+                reflection.klass.after_save     { target_class.delete_association_cache_on self, reflection }
+                reflection.klass.before_destroy { target_class.delete_association_cache_on self, reflection }
               else
                 # If association is _has_many_ or _has_one_ it should reset its cache for associated object with class +target_class+.
                 reflection.klass.after_save     { target_class.where((reflection.options[:primary_key] || :id) =>
