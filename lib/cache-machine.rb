@@ -57,6 +57,14 @@ module ActiveRecord
     # Supported cache formats. You can add your own.
     CACHE_FORMATS = [nil, :ehtml, :html, :json, :xml]
 
+    # The different log levels.
+    # Log levels are specific for each class.
+    # Default is :info.
+    LOGGING_LEVELS = { :debug => 0,    # Tons of log messages for tracking internal functioning of cache-machine.
+                       :info => 1,     # Log messages that visualize how cache-machine works.
+                       :errors => 2,   # Only error messages.
+                       :none => 10 }   # No output at all.
+
     included do
       after_save { self.class.reset_timestamps }
       after_destroy { self.class.reset_timestamps }
@@ -76,10 +84,24 @@ module ActiveRecord
       #   # Cache and expire dependent collections (_mouse_ change invalidates all other collection caches by chain)
       #   acts_as_cache_machine_for :mouses => :cats, :cats => [:gods, :bears], :gods, :bears
       def acts_as_cache_machine_for *associations
-        puts "CACHE_MACHINE init"
+
+        # Set the default logging level if none has been set already.
+        @cache_machine_log_level = LOGGING_LEVELS[:info] unless @cache_machine_log_level
+
+        puts "CACHE_MACHINE init for class #{self.name}" if  @cache_machine_log_level <= LOGGING_LEVELS[:info]
         include ActiveRecord::CacheMachine::AssociatonMachine
         cache_associated(associations)
       end
+      
+      attr_accessor :cache_machine_log_level
+
+      # Sets a class-specific log level.      
+      def cache_machine_logging level
+        @cache_machine_log_level = LOGGING_LEVELS[level]
+        raise "CACHE-MACHINE: Unknown log level: '#{level}'" unless @cache_machine_log_level
+        puts "CACHE_MACHINE: setting log level to '#{level}' (#{@cache_machine_log_level})"
+      end
+      
       # Returns timestamp of class collection.
       def timestamp format = nil
         Rails.cache.fetch(timestamp_key format) { Time.now.to_i.to_s }
@@ -98,7 +120,7 @@ module ActiveRecord
       # Resets timestamp of class collection.
       def reset_timestamp format = nil
         cache_key = timestamp_key format
-        puts "CACHE_MACHINE: reset_timestamp: deleting #{timestamp_key} with format #{format}"
+        puts "CACHE_MACHINE: reset_timestamp: deleting #{timestamp_key} with format #{format}" if @cache_machine_log_level <= LOGGING_LEVELS[:info]
         Rails.cache.delete(cache_key)
       end
 
@@ -129,7 +151,7 @@ module ActiveRecord
         def define_timestamp timestamp_name, options = {}
           define_method timestamp_name do
             fetch_cache_of(timestamp_key_of(timestamp_name), options) do
-              puts "CACHE_MACHINE: define_timestamp: deleting #{timestamp_name}"
+              puts "CACHE_MACHINE: define_timestamp: deleting #{timestamp_name}" if @cache_machine_log_level <= LOGGING_LEVELS[:info]
               delete_cache_of timestamp_name # Case when cache expired by time.
               Time.now.to_i.to_s
             end
@@ -245,7 +267,7 @@ module ActiveRecord
           ActiveRecord::CacheMachine::CACHE_FORMATS.each do |cache_format|
             page_nr = 0
             cache_key = cache_key_of(_member, {:format => cache_format, :page => page_nr += 1})
-            puts "CACHE_MACHINE: delete_cache_of_only: deleting #{cache_key}"
+            puts "CACHE_MACHINE: delete_cache_of_only: deleting #{cache_key}" if @cache_machine_log_level <= LOGGING_LEVELS[:info]
             while Rails.cache.delete(cache_key); end
           end
           reset_timestamp_of _member
@@ -269,7 +291,7 @@ module ActiveRecord
         # Deletes cache of +anything+ from memory.
         def reset_timestamp_of anything
           cache_key = timestamp_key_of anything
-          puts "CACHE_MACHINE: reset_timestamp_of: deleting #{cache_key}"
+          puts "CACHE_MACHINE: reset_timestamp_of: deleting #{cache_key}" if @cache_machine_log_level <= LOGGING_LEVELS[:info]
           Rails.cache.delete(cache_key)
         end
 
