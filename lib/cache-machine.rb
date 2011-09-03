@@ -4,10 +4,8 @@
 #++
 require "cache_machine/logging"
 require "cache_machine/cache"
+require "cache_machine/helpers/cache_helper"
 
-module CacheMachine
-  extend ActiveSupport::Autoload; autoload :Helpers
-  include Logging
-end
 ActiveRecord::Base.send :include, CacheMachine::Cache
-
+ActionView::Helpers::CacheHelper.send :include, CacheMachine::Helpers::CacheHelper
+CacheMachine.send :include, CacheMachine::Logging

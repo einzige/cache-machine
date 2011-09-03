@@ -1,4 +1,5 @@
 require 'action_view/helpers/capture_helper'
+require 'action_view/helpers/cache_helper'
 
 module CacheMachine
   module Helpers
