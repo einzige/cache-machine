@@ -203,22 +203,26 @@ module ActiveRecord
 
           # Hooks Cache Machine on association with name +association_id+.
           def hook_cache_machine_on association_id
-            # TODO: cleanup
+            reset_cache_proc = Proc.new do |reflection, target_class, &block|
+              block ||= lambda { target_class.delete_association_cache_on self, reflection }
+
+              reflection.klass.after_save     &block
+              reflection.klass.before_destroy &block
+            end
+
             case (reflection = (target_class = self).reflect_on_association association_id)
             when ActiveRecord::Reflection::ThroughReflection
               # If association is _many_to_many_ it should reset its cache for all associated objects with class +target_class+.
-              reflection.klass.after_save     { target_class.delete_association_cache_on self, reflection }
-              reflection.klass.before_destroy { target_class.delete_association_cache_on self, reflection }
+              reset_cache_proc.call(reflection, target_class)
             when ActiveRecord::Reflection::AssociationReflection
               if reflection.macro == :has_and_belongs_to_many
-                reflection.klass.after_save     { target_class.delete_association_cache_on self, reflection }
-                reflection.klass.before_destroy { target_class.delete_association_cache_on self, reflection }
+                reset_cache_proc.call(reflection, target_class)
               else
                 # If association is _has_many_ or _has_one_ it should reset its cache for associated object with class +target_class+.
-                reflection.klass.after_save     { target_class.where((reflection.options[:primary_key] || :id) =>
-                                                                 send(reflection.options[:foreign_key] || reflection.primary_key_name)).first.try(:delete_cache_of, association_id) }
-                reflection.klass.before_destroy { target_class.where((reflection.options[:primary_key] || :id) =>
-                                                                 send(reflection.options[:foreign_key] || reflection.primary_key_name)).first.try(:delete_cache_of, association_id) }
+                reset_cache_proc.call(reflection) do
+                  target_class.where((reflection.options[:primary_key] || :id) =>
+                                 send(reflection.options[:foreign_key] || reflection.primary_key_name)).first.try(:delete_cache_of, association_id)
+                end
               end
             end
           end
@@ -235,7 +239,7 @@ module ActiveRecord
         # TODO: Describe options.
         # TODO: Describe timestamp features (we can pass methods or fields as timestamps too).
         #       Or we can use define_timestamp +:expires_in => 20.hours+.
-        def fetch_cache_of _member, options = {}
+        def fetch_cache_of _member, options = {}, &block
           cache_key = if timestamp = options[:timestamp]
             # Make key dependent on collection timestamp and optional timestamp.
             [timestamped_key_of(_member, options), timestamp.to_proc.call(self)].join '_'
@@ -255,7 +259,7 @@ module ActiveRecord
             options[:expires_in]
           end
 
-          Rails.cache.fetch(cache_key, :expires_in => expires_in) { yield }
+          Rails.cache.fetch(cache_key, :expires_in => expires_in, &block)
         end
 
         # Recursively deletes cache by map for +_member+.
