@@ -2,7 +2,7 @@
 
 An ActiveRecord mixin that helps managing cached content in a Ruby on Rails application with complex data update dependencies.
 
-Cache Machine provides 
+Cache Machine provides
 * high-level methods for accessing cached content using page names, numbers, time stamps etc,
 * a DSL to describe update dependencies between the data models underlying the cached content,
 * automatic cache invalidation based on those explicitly modeled data update dependencies.
@@ -13,6 +13,91 @@ You will find Cache Machine useful if you:
 * you have many data models, cached fragments, and many data models used inside each cached fragment
 
 Cache Machine depends only on the Rails.cache API and is thereby library agnostic.
+
+= Examples
+
+  # Fetch cache of venues collection on model_instance.
+  @neighborhood.fetch_cache_of(:venues) { @neighborhood.venues.to_html }
+
+  # Specify format.
+  @neighborhood.fetch_cache_of(:venues, :format => :json) { @neighborhood.venues.to_json }
+
+  # Paginated content.
+  @neighborhood.fetch_cache_of(:venues, :format => :json, :page => 2) { @neighborhood.venues.to_json }
+
+In you target model define <b>cache map</b>:
+
+  acts_as_cache_machine_for :venues  => [:hotspots, :today_events],
+                            :cities  => [:venues],
+                            :streets => :hotspots,
+                            :users
+
+This example shows you how changes of one collection affect on invalidation process.
+For each record of your target model:
+- Users cache is invalidated when changing (_add_, _delete_, _update_) the _users_ collection associated with object of target model
+- Venues cache is invalidated when changing the _venues_ collection
+- Venues cache is invalidated when changing the _cities_ collection. In this case machine automatically invalidates _hotspots_ and _today_events_
+- Cities cache is invalidated when changing the _cities_ collection
+- Hotspots cache is invalidated when changing the _venues_ collection
+- Hotspots cache is invalidated when changing the _streets_ collection
+- Hotspots cache is invalidated when changing the _cities_ collection
+- TodayEvents cache is invalidated when changing the _venues_ collection
+- TodayEvents cache is invalidated when changing the _cities_ collection
+<b>Cache map may contain any name, whatever you want. But invalidation process starts only when ActiveRecord collection is changed.</b>
+
+== Custom cache invalidation
+
+=== Using timestamps
+Suppose you need to reset cache of _schedule_of_events_ every day.
+
+  @lady_gaga.fetch_cache_of :schedule_of_events, :timestamp => lambda { Date.today } do
+    @lady_gaga.events.where(:date.gt => Date.today)
+  end
+
+=== Using Cache Machine timestamps
+Suppose you need to reset cache of _tweets_ every 10 minutes.
+
+  class LadyGagaPerformer < ActiveRecord::Base
+    define_timestamp :tweets_timestamp, :expires_in => 10.minutes
+  end
+
+  #...
+
+  # Somewhere
+  @lady_gaga.fetch_cache_of :tweets, :timestamp => :tweets_timestamp do
+    TwitterApi.fetch_tweets_for @lady_gaga
+  end
+
+=== Using methods as timestamps
+Suppose you have your own really custom cache key.
+
+  class LadyGagaPerformer < ActiveRecord::Base
+    def my_custom_cache_key
+      rand(100) + rand(1000) + rand(10000)
+    end
+  end
+
+  #...
+
+  # Somewere
+  @lady_gaga.fetch_cache_of(:something, :timestamp => :my_custom_cache_key) { '...' }
+
+=== Using class timestamps
+Suppose you need to fetch cached content of one of your collections.
+  Rails.cache.fetch(MyModel.timestamped_key) { '...' }
+
+Want to see collection timestamp?
+  MyModel.timestamp
+
+=== Manual cache invalidation
+  # For classes.
+  MyModel.reset_timestamp
+
+  # For collections.
+  @lady_gaga.delete_cache_of :events
+
+  # For timestamps.
+  @lady_gaga.reset_timestamp_of :events
 
 
 == Contributing to cache-machine
