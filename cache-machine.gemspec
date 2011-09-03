@@ -16,10 +16,7 @@ Gem::Specification.new do |s|
     "LICENSE.txt",
     "README.rdoc"
   ]
-  s.files = [
-    "lib/cache-machine.rb",
-    "lib/action_view/helpers/cache_helper.rb"
-  ]
+  s.files = `git ls-files`.split("\n")
   s.homepage = %q{http://github.com/partyearth/cache-machine}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]

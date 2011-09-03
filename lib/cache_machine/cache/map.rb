@@ -1,188 +1,14 @@
-#--
-# Copyright (c) 2011 {PartyEarth LLC}[http://partyearth.com]
-# mailto:kgoslar@partyearth.com
-#++
-# = Cache Machine
-#
-# Provides smart caching for collections or method results of any +ActiveRecord+ object.
-#
-# === EXAMPLES
-#
-#   # Fetch cache of venues collection on model_instance.
-#   @model_instance.fetch_cache_of :venues { @neighborhood.venues.to_html }
-#
-#   # Specify format.
-#   @model_instance.fetch_cache_of :venues, :format => :json { @neighborhood.venues.to_json }
-#
-#   # Paginated content.
-#   @model_instance.fetch_cache_of :venues, :format => :json, :page => 2 { @neighborhood.venues.to_json }
-#
-# In you target model define <b>cache map</b>:
-#
-#   acts_as_cache_machine_for :venues  => [:hotspots, :today_events],
-#                             :cities  => [:venues],
-#                             :streets => :hotspots,
-#                             :users
-#
-# This example shows you how changes of one collection affect on invalidation process.
-# For each record of your target model:
-# - Users cache is invalidated when changing (_add_, _delete_, _update_) the _users_ collection associated with object of target model
-# - Venues cache is invalidated when changing the _venues_ collection
-# - Venues cache is invalidated when changing the _cities_ collection. In this case machine automatically invalidates _hotspots_ and _today_events_
-# - Cities cache is invalidated when changing the _cities_ collection
-# - Hotspots cache is invalidated when changing the _venues_ collection
-# - Hotspots cache is invalidated when changing the _streets_ collection
-# - Hotspots cache is invalidated when changing the _cities_ collection
-# - TodayEvents cache is invalidated when changing the _venues_ collection
-# - TodayEvents cache is invalidated when changing the _cities_ collection
-# <b>Cache map contains whatever you want (methods, collections, variables etc).
-# Invalidation process starts only when ActiveRecord collection is changed.</b>
-#
-# === Custom cache invalidation
-#
-# ==== Using timestamps
-# Suppose you need to reset cache of _schedule_of_events_ every day.
-#
-#   @lady_gaga.fetch_cache_of :schedule_of_events, :timestamp => lambda { Date.today } do
-#     @lady_gaga.events.where(:date.gt => Date.today)
-#   end
-#
-# ==== Using Cache Machine timestamps
-# Suppose you need to reset cache of _tweets_ every 10 minutes.
-#
-#   class LadyGagaPerformer < ActiveRecord::Base
-#     define_timestamp :tweets_timestamp, :expires_in => 10.minutes
-#   end
-#
-#   #...
-#
-#   # Somewhere
-#   @lady_gaga.fetch_cache_of :tweets, :timestamp => :tweets_timestamp do
-#     TwitterApi.fetch_tweets_for @lady_gaga
-#   end
-#
-# ==== Using methods as timestamps
-# Suppose you have your own really custom cache key.
-#
-#   class LadyGagaPerformer < ActiveRecord::Base
-#     def my_custom_cache_key
-#       rand(100) + rand(1000) + rand(10000)
-#     end
-#   end
-#
-#   #...
-#
-#   # Somewere
-#   @lady_gaga.fetch_cache_of(:something, :timestamp => :my_custom_cache_key) { '...' }
-#
-# ==== Class timestamps
-# Suppose you need to fetch cached content of one of your collections.
-#   Rails.cache.fetch(MyModel.timestamped_key) { '...' }
-#
-# Want to see collection timestamp?
-#   MyModel.timestamp
-#
-# === Manual cache invalidation
-#   # For classes.
-#   MyModel.reset_timestamp
-#
-#   # For collections.
-#   @lady_gaga.delete_cache_of :events
-#
-#   # For timestamps.
-#   @lady_gaga.reset_timestamp_of :events
-module ActiveRecord
-  module CacheMachine
-    extend ActiveSupport::Concern
-
-    # Supported cache formats. You can add your own.
-    CACHE_FORMATS = [nil, :ehtml, :html, :json, :xml]
-
-    class Logger
-      # The different log levels.
-      LOGGING_LEVELS = { :debug  => 0,   # Tons of log messages for tracking internal functioning of cache-machine.
-                         :info   => 1,   # Log messages that visualize how cache-machine works.
-                         :errors => 2,   # Only error messages.
-                         :none   => 10 } # No output at all.
-
-      # The default log level.
-      @@level = LOGGING_LEVELS[:none]
-
-      class << self
-        LOGGING_LEVELS.keys.each do |level|
-          define_method(level) { |message| write level, message }
-        end
-
-        # Sets the log level for CacheMachine.
-        # Call like this in your your code, best in development.rb: ActiveRecord::CacheMachine::Logger.level = :info
-        def level= value
-          @@level = LOGGING_LEVELS[value] or raise "CACHE_MACHINE: Unknown log level: '#{value}'."
-          puts "CACHE_MACHINE: Setting log level to '#{value}'."
-        end
-
-        # Logs the given entry with the given log level.
-        def write level, text
-          puts text if @@level <= (LOGGING_LEVELS[level] or raise "CACHE_MACHINE: Unknown log level: '#{level}'.")
-        end
-      end
-    end
-
-    included do
-      after_save { self.class.reset_timestamps }
-      after_destroy { self.class.reset_timestamps }
-    end
-
-    module ClassMethods
-      # Initializes tracking associations to write and reset cache.
-      # +associations+ parameter is to represent cache map with hash.
-      #
-      # ==== Examples
-      #   # Cache associated collections
-      #   acts_as_cache_machine_for :cats, :dogs
-      #
-      #   # Cache result of method to be expired when collection changes.
-      #   acts_as_cache_machine_for :cats => :cat_ids
-      #
-      #   # Cache and expire dependent collections (_mouse_ change invalidates all other collection caches by chain)
-      #   acts_as_cache_machine_for :mouses => :cats, :cats => [:gods, :bears], :gods, :bears
-      def acts_as_cache_machine_for *associations
-        ActiveRecord::CacheMachine::Logger.info "CACHE_MACHINE init for class #{self.name}"
-        include ActiveRecord::CacheMachine::AssociatonMachine
-        cache_associated(associations)
-      end
-
-      # Returns timestamp of class collection.
-      def timestamp format = nil
-        Rails.cache.fetch(timestamp_key format) { Time.now.to_i.to_s }
-      end
-
-      # Returns cache key to fetch timestamp from memcached.
-      def timestamp_key format = nil
-        [self.name, format, 'timestamp'].join '_'
-      end
-
-      # Returns cache key of +anything+ with timestamp attached.
-      def timestamped_key format = nil
-        [timestamp_key(format), timestamp(format)].join '_'
-      end
-
-      # Resets timestamp of class collection.
-      def reset_timestamp format = nil
-        cache_key = timestamp_key format
-        ActiveRecord::CacheMachine::Logger.info "CACHE_MACHINE: reset_timestamp: deleting #{timestamp_key} with format #{format}"
-        Rails.cache.delete(cache_key)
-      end
-
-      def reset_timestamps
-        CACHE_FORMATS.each { |format| reset_timestamp format }
-      end
-    end
+module CacheMachine
+  module Cache
 
     # Module to write and expire association cache by given map.
-    module AssociatonMachine
+    module Map
       extend ActiveSupport::Concern
+      include CacheMachine::Logging::Logger
 
       included do
+        Logger.info "CACHE_MACHINE: bind cache-map on class #{self.name}"
+
         # Stores associations map to be cached.
         cattr_accessor :cache_map
         self.cache_map = {}
@@ -200,7 +26,7 @@ module ActiveRecord
         def define_timestamp timestamp_name, options = {}
           define_method timestamp_name do
             fetch_cache_of(timestamp_key_of(timestamp_name), options) do
-              ActiveRecord::CacheMachine::Logger.info "CACHE_MACHINE: define_timestamp: deleting #{timestamp_name}"
+              Logger.info "CACHE_MACHINE: define_timestamp: deleting #{timestamp_name}"
               delete_cache_of timestamp_name # Case when cache expired by time.
               Time.now.to_i.to_s
             end
@@ -313,11 +139,10 @@ module ActiveRecord
 
         # Deletes cache of only +_member+ ignoring cache map.
         def delete_cache_of_only _member
-          ActiveRecord::CacheMachine::CACHE_FORMATS.each do |cache_format|
-            page_nr = 0
-            begin
+          CacheMachine::CACHE::FORMATS.each do |cache_format|
+            page_nr = 0; begin
               cache_key = cache_key_of(_member, {:format => cache_format, :page => page_nr += 1})
-              ActiveRecord::CacheMachine::Logger.info "CACHE_MACHINE: delete_cache_of_only: deleting #{cache_key}"
+              Logger.info "CACHE_MACHINE: delete_cache_of_only: deleting #{cache_key}"
             end while Rails.cache.delete(cache_key)
           end
           reset_timestamp_of _member
@@ -341,7 +166,7 @@ module ActiveRecord
         # Deletes cache of +anything+ from memory.
         def reset_timestamp_of anything
           cache_key = timestamp_key_of anything
-          ActiveRecord::CacheMachine::Logger.info "CACHE_MACHINE: reset_timestamp_of: deleting #{cache_key}"
+          Logger.info "CACHE_MACHINE: reset_timestamp_of: deleting #{cache_key}"
           Rails.cache.delete(cache_key)
         end
 
@@ -352,6 +177,7 @@ module ActiveRecord
           def delete_association_cache_on record
             # Find all associations with +record+ by its class.
             associations = self.class.reflect_on_all_associations.find_all { |association| association.klass == record.class }
+
             # Delete cache of each associated collection what may contain +record+.
             associations.map(&:name).each &method(:delete_cache_of)
           end
@@ -359,4 +185,3 @@ module ActiveRecord
     end
   end
 end
-ActiveRecord::Base.send :include, ActiveRecord::CacheMachine
