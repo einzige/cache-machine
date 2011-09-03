@@ -12,44 +12,85 @@
 #   @model_instance.fetch_cache_of :venues { @neighborhood.venues.to_html }
 #
 #   # Specify format.
-#   @model_instance.fetch_cache_of :venues, :json { @neighborhood.venues.to_json }
+#   @model_instance.fetch_cache_of :venues, :format => :json { @neighborhood.venues.to_json }
 #
 #   # Paginated content.
-#   @model_instance.fetch_cache_of :venues, :json, page { @neighborhood.venues.to_json }
+#   @model_instance.fetch_cache_of :venues, :format => :json, :page => 2 { @neighborhood.venues.to_json }
 #
-# In you target model:
+# In you target model define <b>cache map</b>:
 #
 #   acts_as_cache_machine_for :venues  => [:hotspots, :today_events],
 #                             :cities  => [:venues],
 #                             :streets => :hotspots,
 #                             :users
 #
-# This example shows you how changes of one collection affect on invalidation process:
-# - Users cache is invalidated when changing the _users_ collection (_add_, _delete_, _update_)
+# This example shows you how changes of one collection affect on invalidation process.
+# For each record of your target model:
+# - Users cache is invalidated when changing (_add_, _delete_, _update_) the _users_ collection associated with object of target model
 # - Venues cache is invalidated when changing the _venues_ collection
 # - Venues cache is invalidated when changing the _cities_ collection. In this case machine automatically invalidates _hotspots_ and _today_events_
 # - Cities cache is invalidated when changing the _cities_ collection
 # - Hotspots cache is invalidated when changing the _venues_ collection
-# - Hotspots cache is invalidates when changing the _streets_ collection
+# - Hotspots cache is invalidated when changing the _streets_ collection
+# - Hotspots cache is invalidated when changing the _cities_ collection
 # - TodayEvents cache is invalidated when changing the _venues_ collection
-# <b>Keys in cache-map hash is your ActiveRecord collections, values is whatever you want (methods, collections, variables etc).</b>
+# - TodayEvents cache is invalidated when changing the _cities_ collection
+# <b>Cache map contains whatever you want (methods, collections, variables etc).
+# Invalidation process starts only when ActiveRecord collection is changed.</b>
 #
-# === Custom cache keys
+# === Custom cache invalidation
 #
-# For example you need to cache _upcoming_events_ from 11/11/11 to 12/12/12 by date.
+# ==== Using timestamps
+# Suppose you need to reset cache of _schedule_of_events_ every day.
 #
-# [Use timestamps] <tt>Rails.cache.fetch("upcoming_events_#{@city.timestamp_of :upcoming_events}_11/11/11-12/12/12")</tt>
+#   @lady_gaga.fetch_cache_of :schedule_of_events, :timestamp => lambda { Date.today } do
+#     @lady_gaga.events.where(:date.gt => Date.today)
+#   end
 #
-# +timestamp_of+ generates timestamp for you. This timestamp changes on any change in _upcoming_events_ collection.
-# TODO: write more. We have a lot of features for timestamps.
+# ==== Using Cache Machine timestamps
+# Suppose you need to reset cache of _tweets_ every 10 minutes.
 #
-# === Timestamps as cache keys on ActiveRecord classes:
+#   class LadyGagaPerformer < ActiveRecord::Base
+#     define_timestamp :tweets_timestamp, :expires_in => 10.minutes
+#   end
 #
-#   UpcomingEvents.timestamp
+#   #...
 #
-# Timestamp automatically changed when changing collection.
-
-
+#   # Somewhere
+#   @lady_gaga.fetch_cache_of :tweets, :timestamp => :tweets_timestamp do
+#     TwitterApi.fetch_tweets_for @lady_gaga
+#   end
+#
+# ==== Using methods as timestamps
+# Suppose you have your own really custom cache key.
+#
+#   class LadyGagaPerformer < ActiveRecord::Base
+#     def my_custom_cache_key
+#       rand(100) + rand(1000) + rand(10000)
+#     end
+#   end
+#
+#   #...
+#
+#   # Somewere
+#   @lady_gaga.fetch_cache_of(:something, :timestamp => :my_custom_cache_key) { '...' }
+#
+# ==== Class timestamps
+# Suppose you need to fetch cached content of one of your collections.
+#   Rails.cache.fetch(MyModel.timestamped_key) { '...' }
+#
+# Want to see collection timestamp?
+#   MyModel.timestamp
+#
+# === Manual cache invalidation
+#   # For classes.
+#   MyModel.reset_timestamp
+#
+#   # For collections.
+#   @lady_gaga.delete_cache_of :events
+#
+#   # For timestamps.
+#   @lady_gaga.reset_timestamp_of :events
 module ActiveRecord
   module CacheMachine
     extend ActiveSupport::Concern
@@ -203,22 +244,26 @@ module ActiveRecord
 
           # Hooks Cache Machine on association with name +association_id+.
           def hook_cache_machine_on association_id
-            # TODO: cleanup
+            reset_cache_proc = Proc.new do |reflection, target_class, &block|
+              block ||= lambda { target_class.delete_association_cache_on self, reflection }
+
+              reflection.klass.after_save     &block
+              reflection.klass.before_destroy &block
+            end
+
             case (reflection = (target_class = self).reflect_on_association association_id)
             when ActiveRecord::Reflection::ThroughReflection
               # If association is _many_to_many_ it should reset its cache for all associated objects with class +target_class+.
-              reflection.klass.after_save     { target_class.delete_association_cache_on self, reflection }
-              reflection.klass.before_destroy { target_class.delete_association_cache_on self, reflection }
+              reset_cache_proc.call(reflection, target_class)
             when ActiveRecord::Reflection::AssociationReflection
               if reflection.macro == :has_and_belongs_to_many
-                reflection.klass.after_save     { target_class.delete_association_cache_on self, reflection }
-                reflection.klass.before_destroy { target_class.delete_association_cache_on self, reflection }
+                reset_cache_proc.call(reflection, target_class)
               else
                 # If association is _has_many_ or _has_one_ it should reset its cache for associated object with class +target_class+.
-                reflection.klass.after_save     { target_class.where((reflection.options[:primary_key] || :id) =>
-                                                                 send(reflection.options[:foreign_key] || reflection.primary_key_name)).first.try(:delete_cache_of, association_id) }
-                reflection.klass.before_destroy { target_class.where((reflection.options[:primary_key] || :id) =>
-                                                                 send(reflection.options[:foreign_key] || reflection.primary_key_name)).first.try(:delete_cache_of, association_id) }
+                reset_cache_proc.call(reflection) do
+                  target_class.where((reflection.options[:primary_key] || :id) =>
+                                 send(reflection.options[:foreign_key] || reflection.primary_key_name)).first.try(:delete_cache_of, association_id)
+                end
               end
             end
           end
@@ -235,7 +280,7 @@ module ActiveRecord
         # TODO: Describe options.
         # TODO: Describe timestamp features (we can pass methods or fields as timestamps too).
         #       Or we can use define_timestamp +:expires_in => 20.hours+.
-        def fetch_cache_of _member, options = {}
+        def fetch_cache_of _member, options = {}, &block
           cache_key = if timestamp = options[:timestamp]
             # Make key dependent on collection timestamp and optional timestamp.
             [timestamped_key_of(_member, options), timestamp.to_proc.call(self)].join '_'
@@ -255,7 +300,7 @@ module ActiveRecord
             options[:expires_in]
           end
 
-          Rails.cache.fetch(cache_key, :expires_in => expires_in) { yield }
+          Rails.cache.fetch(cache_key, :expires_in => expires_in, &block)
         end
 
         # Recursively deletes cache by map for +_member+.
