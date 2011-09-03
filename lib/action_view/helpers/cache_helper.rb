@@ -1,12 +1,14 @@
 module ActionView
   module Helpers
-    module CacheHelper
-      module CacheMachine
-        def cache_for record, cacheable, options = {}, &block
-          record.fetch_cache_of(cacheable, options) { capture &block }
-        end
+    module CacheMachineHelper
+
+      include CacheHelper
+
+      def cache_for record, cacheable, options = {}, &block
+        record.fetch_cache_of(cacheable, options) { capture &block }
       end
     end
   end
+  ActionView::Helpers.autoload :CacheMachineHelper
+  ActionView::Helpers.send(:include, Helpers::CacheMachineHelper)
 end
-ActionView::Helpers::CacheHelper.send :include, ActionView::Helpers::CacheHelper::CacheMachine
