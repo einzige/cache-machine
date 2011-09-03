@@ -3,10 +3,7 @@ require "rails"
 require "logger"
 require "rspec"
 require "rspec-rails"
-require "cache_machine/logging"
-require "cache_machine/cache"
-require "cache_machine/cache/map"
-require "cache_machine"
+require "cache-machine"
 
 RSpec.configure { |config| config.mock_with :rspec }
 

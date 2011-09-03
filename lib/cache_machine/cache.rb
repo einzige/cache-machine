@@ -1,3 +1,5 @@
+require "cache_machine/cache/map"
+
 module CacheMachine
   module Cache
     extend ActiveSupport::Concern
