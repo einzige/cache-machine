@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe ActiveRecord::CacheMachine do
+describe CacheMachine do
   TARGET_TABLE_NAME = "cachers"
   HABTM_TABLE_NAME = "has_and_belongs_to_many_cacheables"
   HABTM_JOINS_TABLE_NAME = [TARGET_TABLE_NAME, HABTM_TABLE_NAME].join('_')

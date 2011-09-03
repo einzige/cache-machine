@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{cache-machine}
-  s.version = "0.1.5"
+  s.version = "0.1.6"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Kevin Goslar"]
@@ -16,9 +16,7 @@ Gem::Specification.new do |s|
     "LICENSE.txt",
     "README.rdoc"
   ]
-  s.files = [
-    "lib/cache-machine.rb"
-  ]
+  s.files = `git ls-files`.split("\n")
   s.homepage = %q{http://github.com/partyearth/cache-machine}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
