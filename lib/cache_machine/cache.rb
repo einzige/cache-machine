@@ -1,8 +1,6 @@
 module CacheMachine
   module Cache
-
     extend ActiveSupport::Concern
-    include CacheMachine::Logging
 
     # Supported cache formats. You can add your own.
     FORMATS = [nil, :ehtml, :html, :json, :xml]
@@ -48,7 +46,7 @@ module CacheMachine
       # Resets timestamp of class collection.
       def reset_timestamp format = nil
         cache_key = timestamp_key format
-        Logger.info "CACHE_MACHINE: reset_timestamp: deleting #{timestamp_key} with format #{format}"
+        CacheMachine::Logger.info "CACHE_MACHINE: reset_timestamp: deleting #{timestamp_key} with format #{format}"
         Rails.cache.delete(cache_key)
       end
 
