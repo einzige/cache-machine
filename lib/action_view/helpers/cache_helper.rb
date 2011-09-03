@@ -9,4 +9,4 @@ module ActionView
     end
   end
 end
-ActionView::Helpers::CacheHelper.send :extend, ActionView::Helpers::CacheHelper::CacheMachine
+ActionView::Helpers::CacheHelper.send :include, ActionView::Helpers::CacheHelper::CacheMachine
