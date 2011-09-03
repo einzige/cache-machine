@@ -17,7 +17,8 @@ Gem::Specification.new do |s|
     "README.rdoc"
   ]
   s.files = [
-    "lib/cache-machine.rb"
+    "lib/cache-machine.rb",
+    "lib/action_view/helpers/cache_helper.rb"
   ]
   s.homepage = %q{http://github.com/partyearth/cache-machine}
   s.licenses = ["MIT"]
