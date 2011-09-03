@@ -99,6 +99,14 @@ Want to see collection timestamp?
   # For timestamps.
   @lady_gaga.reset_timestamp_of :events
 
+== ActionView helper
+From examples above:
+  <%= cache_for @lady_gaga, :updoming_events do %>
+    <p>Don't hide yourself in regret
+       Just love yourself and you're set</p>
+  <% end %>
+<tt>cache_for</tt> method automatically sets EHTML format on cache key.
+
 
 == Contributing to cache-machine
 
