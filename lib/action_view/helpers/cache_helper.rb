@@ -1,9 +1,6 @@
 module ActionView
   module Helpers
     module CacheMachineHelper
-
-      include CacheHelper
-
       def cache_for record, cacheable, options = {}, &block
         record.fetch_cache_of(cacheable, options) { capture &block }
       end
