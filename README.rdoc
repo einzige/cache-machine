@@ -34,15 +34,15 @@ In you target model define <b>cache map</b>:
 
 This example shows you how changes of one collection affect on invalidation process.
 For each record of your target model:
-- Users cache is invalidated when changing (_add_, _delete_, _update_) the _users_ collection associated with object of target model
-- Venues cache is invalidated when changing the _venues_ collection
-- Venues cache is invalidated when changing the _cities_ collection. In this case machine automatically invalidates _hotspots_ and _today_events_
-- Cities cache is invalidated when changing the _cities_ collection
-- Hotspots cache is invalidated when changing the _venues_ collection
-- Hotspots cache is invalidated when changing the _streets_ collection
-- Hotspots cache is invalidated when changing the _cities_ collection
-- TodayEvents cache is invalidated when changing the _venues_ collection
-- TodayEvents cache is invalidated when changing the _cities_ collection
+- Cache for <b>users</b> collection associated with object of your target model is invalidated when changing (_add_, _remove_, _update_) the _users_ collection
+- Cache for <b>venues</b> collection associated with object of your target model is invalidated when changing the _venues_ collection associated with that object
+- Cache for <b>venues</b> collection associated with object of your target model is invalidated when changing the _cities_ collection. In this case machine automatically invalidates _hotspots_ and _today_events_
+- Cache for <b>cities</b> collection associated with object of your target model is invalidated when changing the _cities_ collection
+- Cache for <b>hotspots</b> collection is invalidated when changing the _venues_ collection
+- Cache for <b>hotspots</b> collection is invalidated when changing the _streets_ collection
+- Cache for <b>hotspots</b> collection is invalidated when changing the _cities_ collection
+- Cache for <b>today_events</b> collection is invalidated when changing the _venues_ collection
+- Cache for <b>today_events</b> collection is invalidated when changing the _cities_ collection
 <b>Cache map may contain any name, whatever you want. But invalidation process starts only when ActiveRecord collection is changed.</b>
 
 == Custom cache invalidation
