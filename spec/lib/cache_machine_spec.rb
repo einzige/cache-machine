@@ -76,6 +76,9 @@ describe CacheMachine do
                               :has_many_through_cacheables => :dependent_cache,
                               :has_and_belongs_to_many_cacheables => :dependent_cache
 
+    define_timestamp(:dynamic_timestamp) { execute_timestamp }
+    define_timestamp(:static_timestamp)
+
     has_and_belongs_to_many :has_and_belongs_to_many_cacheables, :class_name => 'HasAndBelongsToManyCacheable'
     has_many :has_many_cacheables, :class_name => 'HasManyCacheable'
     has_many :joins, :class_name => 'Join'
@@ -96,6 +99,30 @@ describe CacheMachine do
     subject.fetch_cache_of(:has_many_cacheables) { 'cache' }
     cached_result = subject.fetch_cache_of(:has_many_cacheables) { 'fresh cache' }
     cached_result.should eql('cache')
+  end
+
+  describe "defines timestamp" do
+
+    context "dynamic" do
+      it "works" do
+        subject.stub!(:execute_timestamp).and_return(1)
+        subject.fetch_cache_of(:something, :timestamp => :dynamic_timestamp) { "cache" }
+        sleep(2)
+        subject.fetch_cache_of(:something, :timestamp => :dynamic_timestamp) { "foo" }.should eql("cache")
+        subject.stub!(:execute_timestamp).and_return(2)
+        sleep(2)
+        subject.fetch_cache_of(:something, :timestamp => :dynamic_timestamp) { "fresh cache" }.should eql("fresh cache")
+      end
+    end
+
+    context "static" do
+      it "works" do
+        sleep(2)
+        subject.fetch_cache_of(:something, :timestamp => :static_timestamp) { "cache" }
+        sleep(2)
+        subject.fetch_cache_of(:something, :timestamp => :static_timestamp) { "foo" }.should eql("cache")
+      end
+    end
   end
 
   describe "deletes cache" do

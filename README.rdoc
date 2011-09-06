@@ -68,6 +68,19 @@ Suppose you need to reset cache of _tweets_ every 10 minutes.
     TwitterApi.fetch_tweets_for @lady_gaga
   end
 
+Suppose you need custom timestamp value.
+
+  class LadyGagaPerformer < ActiveRecord::Base
+    define_timestamp(:tweets_timestamp) { Time.now.to_i + self.id }
+  end
+
+  #...
+
+  # Somewhere
+  @lady_gaga.fetch_cache_of :tweets, :timestamp => :tweets_timestamp do
+    TwitterApi.fetch_tweets_for @lady_gaga
+  end
+
 === Using methods as timestamps
 Suppose you have your own really custom cache key.
 
