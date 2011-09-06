@@ -22,7 +22,9 @@ module CacheMachine
         end
 
         # Defines timestamp for object.
-        def define_timestamp timestamp_name, options = {}
+        def define_timestamp timestamp_name, options = {}, &block
+          options[:timestamp] = block if block
+
           define_method timestamp_name do
             fetch_cache_of(timestamp_key_of(timestamp_name), options) do
               CacheMachine::Logger.info "CACHE_MACHINE: define_timestamp: deleting #{timestamp_name}"
@@ -108,7 +110,7 @@ module CacheMachine
         def fetch_cache_of _member, options = {}, &block
           cache_key = if timestamp = options[:timestamp]
             # Make key dependent on collection timestamp and optional timestamp.
-            [timestamped_key_of(_member, options), timestamp.to_proc.call(self)].join '_'
+            [timestamped_key_of(_member, options), instance_eval(&timestamp)].join '_'
           else
             cache_key_of(_member, options)
           end
