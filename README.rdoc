@@ -14,7 +14,7 @@ You will find Cache Machine useful if you:
 
 Cache Machine depends only on the Rails.cache API and is thereby library agnostic.
 
-= Examples
+= Usage
 
   # Fetch cache of venues collection on model_instance.
   @neighborhood.fetch_cache_of(:venues) { @neighborhood.venues.to_html }
