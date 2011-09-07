@@ -5,13 +5,13 @@
 
 Gem::Specification.new do |s|
   s.name = %q{cache-machine}
-  s.version = "0.1.6b"
+  s.version = "0.1.7"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Kevin Goslar"]
+  s.authors = ["Kevin Goslar", "Sergei Zinin"]
   s.date = %q{2011-06-30}
   s.description = %q{A Ruby on Rails framework to support cache management based on explicitely modeled caching dependencies.}
-  s.email = %q{kgoslar@partyearth.ru}
+  s.email = %q{kgoslar@partyearth.com}
   s.extra_rdoc_files = [
     "LICENSE.txt",
     "README.rdoc"
@@ -41,4 +41,3 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<jeweler>, ["~> 1.6.2"])
   end
 end
-
