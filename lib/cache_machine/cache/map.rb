@@ -27,7 +27,7 @@ module CacheMachine
 
           define_method timestamp_name do
             fetch_cache_of(timestamp_key_of(timestamp_name), options) do
-              CacheMachine::Logger.info "CACHE_MACHINE: define_timestamp: deleting #{timestamp_name}"
+              CacheMachine::Logger.info "CACHE_MACHINE (define_timestamp): deleting '#{timestamp_name}'."
               delete_cache_of timestamp_name # Case when cache expired by time.
               Time.now.to_i.to_s
             end
@@ -143,7 +143,7 @@ module CacheMachine
           CacheMachine::Cache::FORMATS.each do |cache_format|
             page_nr = 0; begin
               cache_key = cache_key_of(_member, {:format => cache_format, :page => page_nr += 1})
-              CacheMachine::Logger.info "CACHE_MACHINE: delete_cache_of_only: deleting #{cache_key}"
+              CacheMachine::Logger.info "CACHE_MACHINE (delete_cache_of_only): deleting '#{cache_key}'"
             end while Rails.cache.delete(cache_key)
           end
           reset_timestamp_of _member
@@ -167,7 +167,7 @@ module CacheMachine
         # Deletes cache of +anything+ from memory.
         def reset_timestamp_of anything
           cache_key = timestamp_key_of anything
-          CacheMachine::Logger.info "CACHE_MACHINE: reset_timestamp_of: deleting #{cache_key}"
+          CacheMachine::Logger.info "CACHE_MACHINE (reset_timestamp_of): deleting '#{cache_key}'."
           Rails.cache.delete(cache_key)
         end
 

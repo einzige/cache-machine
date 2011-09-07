@@ -48,7 +48,7 @@ module CacheMachine
       # Resets timestamp of class collection.
       def reset_timestamp format = nil
         cache_key = timestamp_key format
-        CacheMachine::Logger.info "CACHE_MACHINE: reset_timestamp: deleting #{timestamp_key} with format #{format}"
+        CacheMachine::Logger.info "CACHE_MACHINE (reset_timestamp): deleting '#{cache_key}'."
         Rails.cache.delete(cache_key)
       end
 
