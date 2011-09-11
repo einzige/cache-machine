@@ -17,13 +17,13 @@ Cache Machine depends only on the Rails.cache API and is thereby library agnosti
 = Usage
 
   # Fetch cache of venues collection on model_instance.
-  @neighborhood.fetch_cache_of(:venues) { @neighborhood.venues.to_html }
+  @neighborhood.fetch_cache_of(:venues) { @neighborhood.venues }
 
   # Specify format.
   @neighborhood.fetch_cache_of(:venues, :format => :json) { @neighborhood.venues.to_json }
 
   # Paginated content.
-  @neighborhood.fetch_cache_of(:venues, :format => :json, :page => 2) { @neighborhood.venues.to_json }
+  @neighborhood.fetch_cache_of(:venues, :page => 2) { @neighborhood.venues.paginate(:page => 2) }
 
 In you target model define <b>cache map</b>:
 
@@ -81,6 +81,18 @@ Suppose you need custom timestamp value.
     TwitterApi.fetch_tweets_for @lady_gaga
   end
 
+Note what timestamp declarations work in object scope. Lets take an example:
+
+  class LadyGagaPerformer < ActiveRecord::Base
+    define_timestamp (:tweets_timestamp) { tweets.last.updated_at.to_i }
+
+    has_many :tweets
+  end
+
+  class Tweet < ActiveRecord::Base
+    belongs_to :lady_gaga_performer
+  end
+
 === Using methods as timestamps
 Suppose you have your own really custom cache key.
 
@@ -111,6 +123,40 @@ Want to see collection timestamp?
 
   # For timestamps.
   @lady_gaga.reset_timestamp_of :events
+
+== Cache formats
+Cache Machine invalidates cache using a couple of keys with the different formats.
+Default formats are:
+- EHTML
+- HTML
+- JSON
+- XML
+
+This means you call 5 times for cache invalidation (1 time without specifying format) with different keys. Sometimes it is too much. Cache machine allows you to set your own formats. Just place in your environment config or in initializer the following:
+  CacheMachine::Cache.formats = [:doc, :pdf]
+
+Or if you do not want to use formats at all:
+  CacheMachine::Cache.formats = nil
+
+Then use:
+
+  @lady_gaga.fetch_cache_of(:new_songs, :format => :doc) { "LaLaLa".to_doc }
+  @lady_gaga.fetch_cache_of(:new_songs, :format => :pdf) { "GaGaGa".to_pdf }
+
+Cache Machine will invalidate cache for each format you specified in config.
+
+== Working with paginated content
+Suppose you installed WillPaginate gem and want to cache each page with fetched results separately.
+  class TweetsController < ApplicationController
+
+    def index
+      @tweets = @lady_gaga.fetch_cache_of(:tweets, :page => params[:page]) do
+        Tweet.all.paginate(:page => params[:page])
+      end
+    end
+  end
+
+Cache Machine will use <tt>:page</tt> as a part of cache key and will invalidate each page on any change in associated collection.
 
 == ActionView helper
 From examples above:
