@@ -141,7 +141,7 @@ module CacheMachine
 
         # Deletes cache of only +_member+ ignoring cache map.
         def delete_cache_of_only _member
-          CacheMachine::Cache::FORMATS.each do |cache_format|
+          CacheMachine::Cache.formats.each do |cache_format|
             page_nr = 0; begin
               cache_key = cache_key_of(_member, {:format => cache_format, :page => page_nr += 1})
               CacheMachine::Logger.info "CACHE_MACHINE (delete_cache_of_only): deleting '#{cache_key}'"

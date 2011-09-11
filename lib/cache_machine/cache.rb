@@ -4,8 +4,16 @@ module CacheMachine
   module Cache
     extend ActiveSupport::Concern
 
-    # Supported cache formats. You can add your own.
-    FORMATS = [nil, :ehtml, :html, :json, :xml]
+    # Supported by default cache formats.
+    @formats = [nil, :ehtml, :html, :json, :xml]
+
+    def self.formats
+      @formats
+    end
+
+    def self.formats= formats
+      @formats = [nil] | formats
+    end
 
     included do
       after_save    { self.class.reset_timestamps }
@@ -24,7 +32,7 @@ module CacheMachine
       #   acts_as_cache_machine_for :cats => :cat_ids
       #
       #   # Cache and expire dependent collections (_mouse_ change invalidates all other collection caches by chain)
-      #   acts_as_cache_machine_for :mouses => :cats, :cats => [:gods, :bears], :gods, :bears
+      #   acts_as_cache_machine_for :mouses => :cats, :cats => [:dogs, :bears], :dogs, :bears
       def acts_as_cache_machine_for *associations
         include CacheMachine::Cache::Map
         cache_associated(associations)
@@ -53,7 +61,7 @@ module CacheMachine
       end
 
       def reset_timestamps
-        FORMATS.each { |format| reset_timestamp format }
+        CacheMachine::Cache.formats.each { |format| reset_timestamp format }
       end
     end
   end
