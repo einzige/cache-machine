@@ -12,7 +12,7 @@ module CacheMachine
     end
 
     def self.formats= formats
-      @formats = [nil] | formats
+      @formats = [nil] | [*formats]
     end
 
     included do
