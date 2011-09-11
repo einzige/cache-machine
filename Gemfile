@@ -1,6 +1,7 @@
 source "http://rubygems.org"
 
 gem "rails"
+gem "activemodel"
 
 group :development do
   gem "bundler", "~> 1.0.0"
