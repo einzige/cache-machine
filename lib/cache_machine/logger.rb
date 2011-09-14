@@ -19,12 +19,16 @@ module CacheMachine
       # Call like this in your your code, best in development.rb: ActiveRecord::CacheMachine::Logger.level = :info
       def level= value
         @@level = LOGGING_LEVELS[value] or raise "CACHE_MACHINE: Unknown log level: '#{value}'."
-        puts "CACHE_MACHINE: Setting log level to '#{value}'."
+        if @@level <= LOGGING_LEVELS[:info]
+          STDERR.puts "CACHE_MACHINE: Setting log level to '#{value}'.\n"
+        end
       end
 
       # Logs the given entry with the given log level.
       def write level, text
-        puts text if @@level <= (LOGGING_LEVELS[level] or raise "CACHE_MACHINE: Unknown log level: '#{level}'.")
+        if @@level <= (LOGGING_LEVELS[level] or raise "CACHE_MACHINE: Unknown log level: '#{level}'.")
+          STDERR.puts text
+        end
       end
     end
   end
