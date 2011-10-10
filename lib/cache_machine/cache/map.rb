@@ -38,7 +38,7 @@ module CacheMachine
         # Called only when <tt>has_many :through</tt> collection changed.
         def delete_association_cache_on record, reflection
           pk = record.class.primary_key
-          self.joins(reflection.name).where(reflection.table_name => { pk => record.send(pk) }).each do |cache_source_record|
+          self.joins(reflection.name).where(reflection.name => { pk => record.send(pk) }).find_each do |cache_source_record|
             cache_source_record.delete_cache_of reflection.name
           end
         end
