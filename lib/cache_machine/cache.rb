@@ -37,6 +37,7 @@ module CacheMachine
         include CacheMachine::Cache::Map
         cache_associated(associations)
       end
+      alias :cache_map :acts_as_cache_machine_for
 
       # Returns timestamp of class collection.
       def timestamp format = nil
