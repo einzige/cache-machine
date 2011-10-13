@@ -1,3 +1,9 @@
+# Packed ge
+*.gem
+
+# RubyMine metadata
+.idea
+
 # test database
 db
 
