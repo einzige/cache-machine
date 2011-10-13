@@ -38,7 +38,14 @@ module CacheMachine
         # Called only when <tt>has_many :through</tt> collection changed.
         def delete_association_cache_on record, reflection
           pk = record.class.primary_key
-          self.joins(reflection.name).where(reflection.name => { pk => record.send(pk) }).find_each do |cache_source_record|
+
+          joining = unless reflection.options[:source_type]
+            reflection.through_reflection ? { reflection.through_reflection.name => reflection.source_reflection.name } : reflection.name
+          else
+            reflection.name
+          end
+
+          self.joins(joining).where(reflection.name => { pk => record.send(pk) }).find_each do |cache_source_record|
             cache_source_record.delete_cache_of reflection.name
           end
         end
@@ -131,6 +138,13 @@ module CacheMachine
           Rails.cache.fetch(cache_key, :expires_in => expires_in, &block)
         end
 
+        # Removes all caches using map.
+        def delete_all_caches
+          self.class.cache_map.keys.each do |cached_collection|
+            delete_cache_of cached_collection
+          end
+        end
+
         # Recursively deletes cache by map for +_member+.
         def delete_cache_of _member
           delete_cache_of_only _member
@@ -179,6 +193,7 @@ module CacheMachine
           # Deletes cache of associated collection what contains +record+.
           # Called only when <tt>has_many :through</tt> collection changed.
           def delete_association_cache_on record
+
             # Find all associations with +record+ by its class.
             associations = self.class.reflect_on_all_associations.find_all { |association| association.klass == record.class }
 
