@@ -107,7 +107,8 @@ module CacheMachine
         # Returns cache key of +_member+.
         # TODO: describe options.
         def cache_key_of _member, options = {}
-          [self.class.name, self.to_param, _member, options[:format], options[:page] || 1].compact.join '_'
+          timestamp = instance_eval(&options[:timestamp]) if options.has_key? :timestamp
+          [self.class.name, self.to_param, _member, options[:format], options[:page] || 1, timestamp].compact.join '_'
         end
 
         # Fetches cache of +_member+ from cache map.
@@ -115,13 +116,6 @@ module CacheMachine
         # TODO: Describe timestamp features (we can pass methods or fields as timestamps too).
         #       Or we can use define_timestamp +:expires_in => 20.hours+.
         def fetch_cache_of _member, options = {}, &block
-          cache_key = if timestamp = options[:timestamp]
-            # Make key dependent on collection timestamp and optional timestamp.
-            [timestamped_key_of(_member, options), instance_eval(&timestamp)].join '_'
-          else
-            cache_key_of(_member, options)
-          end
-
           expires_in = if expires_at = options[:expires_at]
             expires_at = expires_at.call if expires_at.kind_of? Proc
 
@@ -135,14 +129,12 @@ module CacheMachine
           end
 
           CacheMachine::Logger.info "CACHE_MACHINE (fetch_cache_of): reading '#{cache_key}'."
-          Rails.cache.fetch(cache_key, :expires_in => expires_in, &block)
+          Rails.cache.fetch(cache_key_of(_member, options), :expires_in => expires_in, &block)
         end
 
         # Removes all caches using map.
         def delete_all_caches
-          self.class.cache_map.keys.each do |cached_collection|
-            delete_cache_of cached_collection
-          end
+          self.class.cache_map.to_a.flatten.uniq.each &method(:delete_cache_of)
         end
 
         # Recursively deletes cache by map for +_member+.
