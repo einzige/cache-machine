@@ -1,258 +1,148 @@
 require 'spec_helper'
+require 'fixtures'
 
 describe CacheMachine do
-  TARGET_TABLE_NAME = "cachers"
-  HABTM_TABLE_NAME = "has_and_belongs_to_many_cacheables"
-  HABTM_JOINS_TABLE_NAME = [TARGET_TABLE_NAME, HABTM_TABLE_NAME].join('_')
-  HABTM_ASSOCIATION_NAME = HABTM_TABLE_NAME.singularize
-  HM_TABLE_NAME = "has_many_cacheables"
-  HMT_JOINS_TABLE_NAME = "joins"
-  HMT_TABLE_NAME = "has_many_through_cacheables"
-  HO_TABLE_NAME = "hs_one_cacheables"
-  POLY_TABLE_NAME = "polymorphics"
-  TARGET_ASSOCIATION_NAME = TARGET_TABLE_NAME.singularize
-  HMT_ASSOCIATION_NAME = HMT_TABLE_NAME.singularize
-
-  class TestMigration < ActiveRecord::Migration
-    def self.up
-      self.down
-      create_table(HABTM_TABLE_NAME)
-      create_table(HM_TABLE_NAME) { |t| t.references TARGET_ASSOCIATION_NAME }
-      create_table(HMT_TABLE_NAME)
-      create_table(HMT_JOINS_TABLE_NAME) { |t| [TARGET_ASSOCIATION_NAME, HMT_ASSOCIATION_NAME].each &t.method(:references) }
-      create_table(POLY_TABLE_NAME) { |t| t.references(:polymorhicable); t.string(:polymorhicable_type) }
-      create_table(TARGET_TABLE_NAME) { |t| t.string :name; t.integer(:parent_id) }
-      create_table(HABTM_JOINS_TABLE_NAME, :id => false) { |t| [TARGET_ASSOCIATION_NAME, HABTM_ASSOCIATION_NAME].each &t.method(:references) }
-    end
-
-    def self.down
-      drop_table POLY_TABLE_NAME if ActiveRecord::Base.connection.tables.include? POLY_TABLE_NAME
-      drop_table TARGET_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(TARGET_TABLE_NAME)
-      drop_table HABTM_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HABTM_TABLE_NAME)
-      drop_table HM_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HM_TABLE_NAME)
-      drop_table HMT_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HMT_TABLE_NAME)
-      drop_table HO_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HO_TABLE_NAME)
-      drop_table HMT_JOINS_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HMT_JOINS_TABLE_NAME)
-      drop_table HABTM_JOINS_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HABTM_JOINS_TABLE_NAME)
-    end
-  end
-  TestMigration.up
-
-  class HasManyCacheable < ActiveRecord::Base
-    set_table_name HM_TABLE_NAME
-    belongs_to :cacher, :class_name => 'Cacher'
-  end
-
-  class HasManyThroughCacheable < ActiveRecord::Base
-    set_table_name HMT_TABLE_NAME
-
-    has_many :joins, :class_name => 'Join'
-    has_many :cachers, :through => :joins, :class_name => 'Cacher'
-  end
-
-  class Join < ActiveRecord::Base
-    set_table_name HMT_JOINS_TABLE_NAME
-
-    belongs_to :cacher, :class_name => 'Cacher'
-    belongs_to :has_many_through_cacheable, :class_name => 'HasManyThroughCacheable'
-  end
-
-  class HasAndBelongsToManyCacheable < ActiveRecord::Base
-    set_table_name HABTM_TABLE_NAME
-    has_and_belongs_to_many :cachers, :class_name => 'Cacher'
-  end
-
-  class Polymorphic < ActiveRecord::Base
-    set_table_name POLY_TABLE_NAME
-    belongs_to :polymorhicable, :polymorphic => true
-  end
-
-  class Cacher < ActiveRecord::Base
-    set_table_name TARGET_TABLE_NAME
-
-    cache_map :polymorphics,
-              :child_cachers,
-              :has_many_cacheables => :dependent_cache,
-              :has_many_through_cacheables => :dependent_cache,
-              :has_and_belongs_to_many_cacheables => :dependent_cache
-
-    define_timestamp(:dynamic_timestamp) { execute_timestamp }
-    define_timestamp(:static_timestamp)
-
-    has_and_belongs_to_many :has_and_belongs_to_many_cacheables, :class_name => 'HasAndBelongsToManyCacheable'
-    has_many :has_many_cacheables, :class_name => 'HasManyCacheable'
-    has_many :joins, :class_name => 'Join'
-    has_many :has_many_through_cacheables, :through => :joins, :class_name => 'HasManyThroughCacheable'
-    has_many :polymorphics, :as => :polymorhicable
-    has_many :child_cachers, :class_name => 'Cacher', :foreign_key => 'parent_id', :primary_key => 'id'
-
-    def to_param; name end
-  end
-
   subject { Cacher.create(:name => 'foo') }
 
-  it "generates association cache keys" do
-    subject.cache_key_of(:has_many_cacheables, :format => :ehtml).should eql("Cacher_foo_has_many_cacheables_ehtml_1")
+  describe "#cache_key_of" do
+    it "generates association cache keys" do
+      subject.cache_key_of(:anything).should eql("Cacher_foo_anything_1")
+      subject.cache_key_of(:anything, :format => :ehtml).should eql("Cacher_foo_anything_ehtml_1")
+      subject.cache_key_of(:anything, :page => 2).should eql("Cacher_foo_anything_2")
+      subject.cache_key_of(:anything, :format => :ehtml, :page => 2).should eql("Cacher_foo_anything_ehtml_2")
+    end
   end
 
-  it "stores association cache" do
-    subject.fetch_cache_of(:has_many_cacheables) { 'cache' }
-    cached_result = subject.fetch_cache_of(:has_many_cacheables) { 'fresh cache' }
-    cached_result.should eql('cache')
-  end
-
-  describe "defines timestamp" do
-
-    context "dynamic" do
-      it "works" do
-        subject.stub!(:execute_timestamp).and_return(1)
-        subject.fetch_cache_of(:something, :timestamp => :dynamic_timestamp) { "cache" }
-        sleep(2)
-        subject.fetch_cache_of(:something, :timestamp => :dynamic_timestamp) { "foo" }.should eql("cache")
-        subject.stub!(:execute_timestamp).and_return(2)
-        sleep(2)
-        subject.fetch_cache_of(:something, :timestamp => :dynamic_timestamp) { "fresh cache" }.should eql("fresh cache")
-      end
+  describe "#fetch_cache_of" do
+    it "stores association cache" do
+      subject.fetch_cache_of(:has_many_cacheables) { 'cache' }
+      subject.fetch_cache_of(:has_many_cacheables).should == 'cache'
     end
 
-    context "static" do
-      it "works" do
-        sleep(2)
-        subject.fetch_cache_of(:something, :timestamp => :static_timestamp) { "cache" }
-        sleep(2)
-        subject.fetch_cache_of(:something, :timestamp => :static_timestamp) { "foo" }.should eql("cache")
+    context "timestamps" do
+      it "works with timestamps" do
+        subject.should_receive(:cache_key_of).with(:anything, hash_including(:timestamp => :dynamic_timestamp)).and_return "returned stamp"
+        Rails.cache.should_receive(:fetch).with("returned stamp", :expires_in => nil).once
+        subject.fetch_cache_of(:anything, :timestamp => :dynamic_timestamp)
+      end
+
+      it "calls for instance methods" do
+        subject.should_receive(:execute_timestamp).once
+        subject.fetch_cache_of(:anything, :timestamp => :dynamic_timestamp)
       end
     end
   end
 
-  context "deletes cache" do
-
+  context "resets cache" do
     describe "#delete_all_caches" do
       it "removes all caches using map" do
-        subject.fetch_cache_of(:polymorphics) { 'cache' }
-        subject.fetch_cache_of(:dependent_cache) { 'cache' }
-
+        subject.should_receive(:delete_cache_of).with(:polymorphics).once
+        subject.should_receive(:delete_cache_of).with(:child_cachers).once
+        subject.should_receive(:delete_cache_of).with(:has_many_cacheables).once
+        subject.should_receive(:delete_cache_of).with(:dependent_cache).once
+        subject.should_receive(:delete_cache_of).with(:has_many_through_cacheables).once
+        subject.should_receive(:delete_cache_of).with(:has_and_belongs_to_many_cacheables).once
         subject.delete_all_caches
-
-        subject.fetch_cache_of(:polymorphics) { 'new cache' }.should == 'new cache'
-        subject.fetch_cache_of(:dependent_cache) { 'new cache' }.should == 'new cache'
       end
     end
 
-    context "of polymorphic associations" do
-      it "works" do
-        cached_result = subject.fetch_cache_of(:polymorphics) { 'cache' }
-        subject.polymorphics.create
-        cached_result = subject.fetch_cache_of(:polymorphics) { 'new cache' }
-
-        cached_result.should eql('new cache')
+    describe "#delete_cache_of" do
+      it "resets cache" do
+        subject.fetch_cache_of(:anything) { 'cache' }
+        subject.delete_cache_of :anything
+        subject.fetch_cache_of(:anything).should be_nil
       end
-    end
 
-    context "of paginated content" do
-      before :each do
+      it "resets cache by map" do
+        subject.fetch_cache_of(:dependent_cache) { 'cache' }
         subject.delete_cache_of :has_many_cacheables
+        subject.fetch_cache_of(:dependent_cache).should be_nil
       end
 
-      it "works" do
-        subject.fetch_cache_of(:has_many_cacheables, :page => 1) { 'page 1' }.should eql('page 1')
-        subject.fetch_cache_of(:has_many_cacheables, :page => 2) { 'page 2' }.should eql('page 2')
-        subject.delete_cache_of(:has_many_cacheables)
-        subject.fetch_cache_of(:has_many_cacheables, :page => 1) { 'fresh page 1' }.should eql('fresh page 1')
-        subject.fetch_cache_of(:has_many_cacheables, :page => 2) { 'fresh page 2' }.should eql('fresh page 2')
-      end
-    end
+      context "callbacks" do
+        context "on polymorphic associations" do
+          it "resets cache on add new item to associated collection" do
+            subject.fetch_cache_of(:polymorphics) { 'cache' }
+            subject.polymorphics.create
+            subject.fetch_cache_of(:polymorphics).should be_nil
+          end
+        end
 
-    context "of self-join association" do
-      it "works" do
-        subject.fetch_cache_of(:child_cachers) { 'cache' }
-        child = Cacher.create(:parent_id => subject.id)
-        cached_result = subject.fetch_cache_of(:child_cachers) { 'new cache' }
+        context "on self-join associations" do
+          it "resets cache on add new item to associated collection" do
+            subject.fetch_cache_of(:child_cachers) { 'cache' }
+            Cacher.create(:parent_id => subject.id)
+            subject.fetch_cache_of(:child_cachers).should be_nil
+          end
+        end
 
-        cached_result.should eql('new cache')
-      end
-    end
+        context "on has_many associations" do
+          let(:new_entry) { HasManyCacheable.create }
 
-    context "of any member on has_many" do
-      before :each do
-        @existing_entry = subject.has_many_cacheables.create
-        @new_entry = HasManyCacheable.create
-        subject.fetch_cache_of(:has_many_cacheables) { 'cache' }
-      end
+          before :each do
+            @existing_entry = subject.has_many_cacheables.create
+            subject.fetch_cache_of(:has_many_cacheables) { 'cache' }
+          end
 
-      after :each do
-        cached_result = subject.fetch_cache_of(:has_many_cacheables) { 'fresh cache' }
-        cached_result.should eql('fresh cache')
-        subject.delete_cache_of(:has_many_cacheables)
-      end
+          after :each do
+            subject.fetch_cache_of(:has_many_cacheables).should be_nil
+            subject.delete_cache_of(:has_many_cacheables)
+          end
 
-      it("works") { subject.delete_cache_of(:has_many_cacheables) }
-      it("on update entry in collection") { @existing_entry.save }
-      it("on add new entry in collection") { subject.has_many_cacheables << @new_entry }
-      it("on destroy intem in collection") { subject.has_many_cacheables.destroy @existing_entry }
-      it("on destroy intem") { HasManyCacheable.destroy @existing_entry }
-
-      context "by chain" do
-        it "works" do
-          subject.fetch_cache_of(:dependent_cache) { 'cache' }
-          subject.has_many_cacheables.create
-          subject.fetch_cache_of(:dependent_cache) { 'fresh cache' }.should eql('fresh cache')
+          it("on update entry in collection")  { @existing_entry.save }
+          it("on add new entry in collection") { subject.has_many_cacheables << new_entry }
+          it("on destroy intem in collection") { subject.has_many_cacheables.destroy @existing_entry }
+          it("on destroy intem")               { HasManyCacheable.destroy @existing_entry }
         end
       end
-    end
 
-    context "of any member on has_many :through" do
-      before :each do
-        @existing_entry = subject.has_many_through_cacheables.create
-        @new_entry = HasManyThroughCacheable.create
-        subject.fetch_cache_of(:has_many_through_cacheables) { 'cache' }
-      end
+      context "has_many :through associations" do
+        let(:new_entry) { HasManyThroughCacheable.create }
 
-      after :each do
-        cached_result = subject.fetch_cache_of(:has_many_through_cacheables) { 'fresh cache' }
-        cached_result.should eql('fresh cache')
-        subject.delete_cache_of(:has_many_through_cacheables)
-      end
-
-      it("works") { subject.delete_cache_of(:has_many_through_cacheables) }
-      it("on update entry in collection") { @existing_entry.save }
-      it("on add new entry in collection") { subject.has_many_through_cacheables << @new_entry }
-      it("on destroy intem in collection") { subject.has_many_through_cacheables.destroy @existing_entry }
-      it("on destroy intem") { HasManyThroughCacheable.destroy @existing_entry }
-
-      context "by chain" do
-        it "works" do
-          subject.fetch_cache_of(:dependent_cache) { 'cache' }
-          subject.has_many_through_cacheables.create
-          subject.fetch_cache_of(:dependent_cache) { 'fresh cache' }.should eql('fresh cache')
+        before :each do
+          @existing_entry = subject.has_many_through_cacheables.create
+          subject.fetch_cache_of(:has_many_through_cacheables) { 'cache' }
         end
-      end
-    end
 
-    context "of any member on has_and_belongs_to_many" do
-      before :each do
-        @existing_entry = subject.has_and_belongs_to_many_cacheables.create
-        @new_entry = HasAndBelongsToManyCacheable.create
-        subject.fetch_cache_of(:has_and_belongs_to_many_cacheables) { 'cache' }
-      end
+        after :each do
+          subject.fetch_cache_of(:has_many_through_cacheables).should be_nil
+          subject.delete_cache_of(:has_many_through_cacheables)
+        end
 
-      after :each do
-        cached_result = subject.fetch_cache_of(:has_and_belongs_to_many_cacheables) { 'fresh cache' }
-        cached_result.should eql('fresh cache')
-        subject.delete_cache_of(:has_and_belongs_to_many_cacheables)
+        it("on update entry in collection")  { @existing_entry.save }
+        it("on add new entry in collection") { subject.has_many_through_cacheables << new_entry }
+        it("on destroy intem in collection") { subject.has_many_through_cacheables.destroy @existing_entry }
+        it("on destroy intem")               { HasManyThroughCacheable.destroy @existing_entry }
       end
 
-      it("works") { subject.delete_cache_of(:has_and_belongs_to_many_cacheables) }
-      it("on update entry in collection") { @existing_entry.save }
-      it("on add new entry in collection") { subject.has_and_belongs_to_many_cacheables << @new_entry }
-      it("on destroy intem in collection") { subject.has_and_belongs_to_many_cacheables.destroy @existing_entry }
-      it("on destroy intem") { HasAndBelongsToManyCacheable.destroy @existing_entry }
+      context "has_and_belongs_to_many associations" do
+        let(:new_entry) { HasAndBelongsToManyCacheable.create }
+        before :each do
+          @existing_entry = subject.has_and_belongs_to_many_cacheables.create
+          subject.fetch_cache_of(:has_and_belongs_to_many_cacheables) { 'cache' }
+        end
 
-      context "by chain" do
+        after :each do
+          subject.fetch_cache_of(:has_and_belongs_to_many_cacheables).should be_nil
+          subject.delete_cache_of(:has_and_belongs_to_many_cacheables)
+        end
+
+        it("on update entry in collection")  { @existing_entry.save }
+        it("on add new entry in collection") { subject.has_and_belongs_to_many_cacheables << new_entry }
+        it("on destroy intem in collection") { subject.has_and_belongs_to_many_cacheables.destroy @existing_entry }
+        it("on destroy intem")               { HasAndBelongsToManyCacheable.destroy @existing_entry }
+      end
+
+      context "paginated content" do
         it "works" do
-          subject.fetch_cache_of(:dependent_cache) { 'cache' }
-          subject.has_and_belongs_to_many_cacheables.create
-          subject.fetch_cache_of(:dependent_cache) { 'fresh cache' }.should eql('fresh cache')
+          subject.delete_cache_of :has_many_cacheables
+          subject.fetch_cache_of(:has_many_cacheables, :page => 1) { 'page 1' }.should eql('page 1')
+          subject.fetch_cache_of(:has_many_cacheables, :page => 2) { 'page 2' }.should eql('page 2')
+
+          subject.delete_cache_of(:has_many_cacheables)
+
+          subject.fetch_cache_of(:has_many_cacheables, :page => 1).should be_nil
+          subject.fetch_cache_of(:has_many_cacheables, :page => 2).should be_nil
         end
       end
     end
