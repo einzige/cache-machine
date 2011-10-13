@@ -70,11 +70,11 @@ describe CacheMachine do
   class Cacher < ActiveRecord::Base
     set_table_name TARGET_TABLE_NAME
 
-    acts_as_cache_machine_for :polymorphics,
-                              :child_cachers,
-                              :has_many_cacheables => :dependent_cache,
-                              :has_many_through_cacheables => :dependent_cache,
-                              :has_and_belongs_to_many_cacheables => :dependent_cache
+    cache_map :polymorphics,
+              :child_cachers,
+              :has_many_cacheables => :dependent_cache,
+              :has_many_through_cacheables => :dependent_cache,
+              :has_and_belongs_to_many_cacheables => :dependent_cache
 
     define_timestamp(:dynamic_timestamp) { execute_timestamp }
     define_timestamp(:static_timestamp)
@@ -125,7 +125,19 @@ describe CacheMachine do
     end
   end
 
-  describe "deletes cache" do
+  context "deletes cache" do
+
+    describe "#delete_all_caches" do
+      it "removes all caches using map" do
+        subject.fetch_cache_of(:polymorphics) { 'cache' }
+        subject.fetch_cache_of(:dependent_cache) { 'cache' }
+
+        subject.delete_all_caches
+
+        subject.fetch_cache_of(:polymorphics) { 'new cache' }.should == 'new cache'
+        subject.fetch_cache_of(:dependent_cache) { 'new cache' }.should == 'new cache'
+      end
+    end
 
     context "of polymorphic associations" do
       it "works" do

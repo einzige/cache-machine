@@ -28,10 +28,10 @@ Cache Machine depends only on the Rails.cache API and is thereby library agnosti
 
 In you target model define <b>cache map</b>:
 
-  acts_as_cache_machine_for :venues  => [:hotspots, :today_events],
-                            :cities  => [:venues],
-                            :streets => :hotspots,
-                            :users
+  cache_map :venues  => [:hotspots, :today_events],
+            :cities  => [:venues],
+            :streets => :hotspots,
+            :users
 
 This example shows you how changes of one collection affect on invalidation process.
 For each record of your target model:
@@ -124,6 +124,9 @@ Want to see collection timestamp?
 
   # For timestamps.
   @lady_gaga.reset_timestamp_of :events
+
+  # You can reset all associated caches using map.
+  @lady_gaga.delete_all_caches
 
 == Cache formats
 Cache Machine invalidates cache using a couple of keys with the different formats.
