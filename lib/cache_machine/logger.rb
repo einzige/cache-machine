@@ -16,13 +16,20 @@ module CacheMachine
       end
 
       # Sets the log level for CacheMachine.
-      # Call like this in your your code, best in development.rb: ActiveRecord::CacheMachine::Logger.level = :info
+      #
+      # @example Call like this in your your code, best in development.rb:
+      #   ActiveRecord::CacheMachine::Logger.level = :info
+      #
+      # @param [Symbol] value
       def level= value
         @@level = LOGGING_LEVELS[value] or raise "CACHE_MACHINE: Unknown log level: '#{value}'."
         puts "CACHE_MACHINE: Setting log level to '#{value}'."
       end
 
       # Logs the given entry with the given log level.
+      #
+      # @param [ Symbol ] level
+      # @param [ String ] text
       def write level, text
         puts text if @@level <= (LOGGING_LEVELS[level] or raise "CACHE_MACHINE: Unknown log level: '#{level}'.")
       end
