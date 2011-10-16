@@ -1,14 +1,14 @@
-TARGET_TABLE_NAME = "cachers"
-HABTM_TABLE_NAME = "has_and_belongs_to_many_cacheables"
-HABTM_JOINS_TABLE_NAME = [TARGET_TABLE_NAME, HABTM_TABLE_NAME].join('_')
-HABTM_ASSOCIATION_NAME = HABTM_TABLE_NAME.singularize
-HM_TABLE_NAME = "has_many_cacheables"
-HMT_JOINS_TABLE_NAME = "joins"
-HMT_TABLE_NAME = "has_many_through_cacheables"
-HO_TABLE_NAME = "hs_one_cacheables"
-POLY_TABLE_NAME = "polymorphics"
+TARGET_TABLE_NAME       = "cachers"
+HABTM_TABLE_NAME        = "has_and_belongs_to_many_cacheables"
+HABTM_JOINS_TABLE_NAME  = [TARGET_TABLE_NAME, HABTM_TABLE_NAME].join('_')
+HABTM_ASSOCIATION_NAME  = HABTM_TABLE_NAME.singularize
+HM_TABLE_NAME           = "has_many_cacheables"
+HMT_JOINS_TABLE_NAME    = "joins"
+HMT_TABLE_NAME          = "has_many_through_cacheables"
+HO_TABLE_NAME           = "hs_one_cacheables"
+POLY_TABLE_NAME         = "polymorphics"
 TARGET_ASSOCIATION_NAME = TARGET_TABLE_NAME.singularize
-HMT_ASSOCIATION_NAME = HMT_TABLE_NAME.singularize
+HMT_ASSOCIATION_NAME    = HMT_TABLE_NAME.singularize
 
 class TestMigration < ActiveRecord::Migration
   def self.up
@@ -23,13 +23,13 @@ class TestMigration < ActiveRecord::Migration
   end
 
   def self.down
-    drop_table POLY_TABLE_NAME if ActiveRecord::Base.connection.tables.include? POLY_TABLE_NAME
-    drop_table TARGET_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(TARGET_TABLE_NAME)
-    drop_table HABTM_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HABTM_TABLE_NAME)
-    drop_table HM_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HM_TABLE_NAME)
-    drop_table HMT_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HMT_TABLE_NAME)
-    drop_table HO_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HO_TABLE_NAME)
-    drop_table HMT_JOINS_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HMT_JOINS_TABLE_NAME)
+    drop_table POLY_TABLE_NAME        if ActiveRecord::Base.connection.tables.include?(POLY_TABLE_NAME)
+    drop_table TARGET_TABLE_NAME      if ActiveRecord::Base.connection.tables.include?(TARGET_TABLE_NAME)
+    drop_table HABTM_TABLE_NAME       if ActiveRecord::Base.connection.tables.include?(HABTM_TABLE_NAME)
+    drop_table HM_TABLE_NAME          if ActiveRecord::Base.connection.tables.include?(HM_TABLE_NAME)
+    drop_table HMT_TABLE_NAME         if ActiveRecord::Base.connection.tables.include?(HMT_TABLE_NAME)
+    drop_table HO_TABLE_NAME          if ActiveRecord::Base.connection.tables.include?(HO_TABLE_NAME)
+    drop_table HMT_JOINS_TABLE_NAME   if ActiveRecord::Base.connection.tables.include?(HMT_JOINS_TABLE_NAME)
     drop_table HABTM_JOINS_TABLE_NAME if ActiveRecord::Base.connection.tables.include?(HABTM_JOINS_TABLE_NAME)
   end
 end
