@@ -1,7 +1,6 @@
 module CacheMachine
   module Cache
 
-    # Module to write and expire association cache by given map.
     module Map
       extend ActiveSupport::Concern
 
@@ -14,7 +13,10 @@ module CacheMachine
       end
 
       module ClassMethods
+
         # Fills cache map.
+        #
+        # @param [ Hash<Symbol, Array> ] associations
         def cache_associated associations
           [*associations].each do |association|
             self.cache_map.merge! association.is_a?(Hash) ? association : {association => []}
@@ -22,20 +24,32 @@ module CacheMachine
         end
 
         # Defines timestamp for object.
+        #
+        # @example Define timestamp to be updated every hour.
+        #   class MyModel < ActiveRecord::Base
+        #     include CacheMachine::Cache
+        #     define_timestamp(:my_timestamp, :expires_in => 1.hour) { my_optional_value }
+        #   end
+        #
+        # @param [ String, Symbol ] timestamp_name
+        # @param [ Hash ] options
         def define_timestamp timestamp_name, options = {}, &block
-          options[:timestamp] = block if block
+          if block_given?
+            options[:timestamp] = block
+          end
 
           define_method timestamp_name do
             fetch_cache_of(timestamp_key_of(timestamp_name), options) do
               CacheMachine::Logger.info "CACHE_MACHINE (define_timestamp): deleting old timestamp '#{timestamp_name}'."
               delete_cache_of timestamp_name # Case when cache expired by time.
-              Time.now.to_i.to_s
+              Time.zone.now.to_i.to_s
             end
           end
         end
 
-        # Deletes cache of collection with name +association_id+ for each object associated with +record+
-        # Called only when <tt>has_many :through</tt> collection changed.
+        # Deletes cache of collection associated via many-to-many.
+        #
+        # @param [ ActiveRecord::Base ]
         def delete_association_cache_on record, reflection
           pk = record.class.primary_key
 
@@ -50,8 +64,10 @@ module CacheMachine
           end
         end
 
-        # Overwrites +has_many+ of +ActiveRecord+ class to hook Cache Machine.
-        def has_many(association_id, options = {})
+        # Hooks association changes.
+        #
+        # @private
+        def has_many(association_id, options = {}) #:nodoc:
           # Ensure what collection should be tracked.
           if (should_be_on_hook = self.cache_map.keys.include?(association_id)) && options[:through]
             # If relation is _many_to_many_ track collection changes.
@@ -62,11 +78,15 @@ module CacheMachine
           hook_cache_machine_on association_id if should_be_on_hook
         end
 
-        # Overwrites +has_and_belongs_to_many+ of +ActiveRecord+ class to hook Cache Machine.
-        def has_and_belongs_to_many(association_id, options = {})
+        # Hooks association changes.
+        #
+        # @private
+        def has_and_belongs_to_many(association_id, options = {}) #:nodoc:
+
           # Ensure what collection should be tracked.
           if(should_be_on_hook = self.cache_map.keys.include?(association_id))
-            # If relation is _many_to_many_ track collection changes.
+
+            # If relation is many-to-many track collection changes.
             options[:after_add] = \
             options[:before_remove] = :delete_association_cache_on
           end
@@ -76,7 +96,9 @@ module CacheMachine
 
         protected
 
-          # Hooks Cache Machine on association with name +association_id+.
+          # Hooks Cache Machine.
+          #
+          # @param [ Symbol ] association_id
           def hook_cache_machine_on association_id
             reset_cache_proc = Proc.new do |reflection, target_class, &block|
               block ||= lambda { target_class.delete_association_cache_on self, reflection }
@@ -104,48 +126,65 @@ module CacheMachine
       end
 
       module InstanceMethods
-        # Returns cache key of +_member+.
-        # TODO: describe options.
+
+        # Returns cache key of the member.
+        #
+        # @param [ Symbol ] _member
+        # @param [ Hash ] options
+        #
+        # @return [ String ]
         def cache_key_of _member, options = {}
-          [self.class.name, self.to_param, _member, options[:format], options[:page] || 1].compact.join '_'
+          timestamp = instance_eval(&options[:timestamp]) if options.has_key? :timestamp
+
+          [ self.class.name,
+            self.to_param,
+            _member,
+            options[:format],
+            options[:page] || 1,
+            timestamp ].flatten.compact.join '/'
         end
 
-        # Fetches cache of +_member+ from cache map.
-        # TODO: Describe options.
-        # TODO: Describe timestamp features (we can pass methods or fields as timestamps too).
-        #       Or we can use define_timestamp +:expires_in => 20.hours+.
+        # Fetches cache of the member.
+        #
+        # @example Fetch cache of associated collection to be refreshed every hour.
+        #   @instance.fetch_cache_of :association, :timestamp => lambda { custom_instance_method },
+        #                                          :expires_in => 1.hour
+        #
+        # @param [ Symbol ] _member
+        # @param [ Hash ] options
+        #
+        # @return [ * ]
         def fetch_cache_of _member, options = {}, &block
-          cache_key = if timestamp = options[:timestamp]
-            # Make key dependent on collection timestamp and optional timestamp.
-            [timestamped_key_of(_member, options), instance_eval(&timestamp)].join '_'
-          else
-            cache_key_of(_member, options)
-          end
+          if CacheMachine::Cache::enabled?
+            expires_in = if expires_at = options[:expires_at]
+              if expires_at.kind_of? Proc
+                expires_at = expires_at.call
+              end
 
-          expires_in = if expires_at = options[:expires_at]
-            expires_at = expires_at.call if expires_at.kind_of? Proc
-
-            if expires_at.kind_of? Time
-              expires_at - Time.now
+              if expires_at.kind_of? Time
+                expires_at - Time.zone.now
+              else
+                raise ArgumentError, "expires_at is not a Time"
+              end
             else
-              raise ArgumentError, "expires_at is not a Time"
+              options[:expires_in]
             end
-          else
-            options[:expires_in]
-          end
 
-          CacheMachine::Logger.info "CACHE_MACHINE (fetch_cache_of): reading '#{cache_key}'."
-          Rails.cache.fetch(cache_key, :expires_in => expires_in, &block)
+            CacheMachine::Logger.info "CACHE_MACHINE (fetch_cache_of): reading '#{cache_key}'."
+            Rails.cache.fetch(cache_key_of(_member, options), :expires_in => expires_in, &block)
+          else
+            yield
+          end
         end
 
         # Removes all caches using map.
         def delete_all_caches
-          self.class.cache_map.keys.each do |cached_collection|
-            delete_cache_of cached_collection
-          end
+          self.class.cache_map.to_a.flatten.uniq.each &method(:delete_cache_of)
         end
 
-        # Recursively deletes cache by map for +_member+.
+        # Recursively deletes cache by map starting from the member.
+        #
+        # @param [ Symbol ] _member
         def delete_cache_of _member
           delete_cache_of_only _member
           if chain = self.class.cache_map[_member]
@@ -153,7 +192,9 @@ module CacheMachine
           end
         end
 
-        # Deletes cache of only +_member+ ignoring cache map.
+        # Deletes cache of the only member ignoring cache map.
+        #
+        # @param [ Symbol ] _member
         def delete_cache_of_only _member
           CacheMachine::Cache.formats.each do |cache_format|
             page_nr = 0; begin
@@ -164,24 +205,38 @@ module CacheMachine
           reset_timestamp_of _member
         end
 
-        # Returns timestamp cache key for +anything+.
+        # Returns timestamp cache key for anything.
+        #
+        # @param [ String, Symbol ] anything
+        #
+        # @return [ String ]
         def timestamp_key_of anything
-          [self.class.name, self.to_param, anything, 'timestamp'].join '_'
+          [self.class.name, self.to_param, anything, 'timestamp'].join '/'
         end
 
-        # Returns timestamp of +anything+ from memcached.
+        # Returns timestamp of anything from memcached.
+        #
+        # @param [ String, Symbol ] anything
+        #
+        # @return [ String ]
         def timestamp_of anything
-          key = timestamp_key_of anything
-          CacheMachine::Logger.info "CACHE_MACHINE (timestamp_of): reading timestamp '#{key}'."
-          Rails.cache.fetch(key) { Time.now.to_i.to_s }
+          if CacheMachine::Cache::enabled?
+            key = timestamp_key_of anything
+            CacheMachine::Logger.info "CACHE_MACHINE (timestamp_of): reading timestamp '#{key}'."
+            Rails.cache.fetch(key) { Time.zone.now.to_i.to_s }
+          else
+            Time.zone.now.to_i.to_s
+          end
         end
 
         # Returns cache key of +anything+ with timestamp attached.
+        #
+        # @return [ String ]
         def timestamped_key_of anything, options = {}
-          [cache_key_of(anything, options), timestamp_of(anything)].join '_'
+          [cache_key_of(anything, options), timestamp_of(anything)].join '/'
         end
 
-        # Deletes cache of +anything+ from memory.
+        # Deletes cache of anything from memory.
         def reset_timestamp_of anything
           cache_key = timestamp_key_of anything
           CacheMachine::Logger.info "CACHE_MACHINE (reset_timestamp_of): deleting '#{cache_key}'."
@@ -190,8 +245,10 @@ module CacheMachine
 
         protected
 
-          # Deletes cache of associated collection what contains +record+.
-          # Called only when <tt>has_many :through</tt> collection changed.
+          # Deletes cache of associated collection what contains record.
+          # Called only when many-to-many collection changed.
+          #
+          # @param [ ActiveRecord::Base ] record
           def delete_association_cache_on record
 
             # Find all associations with +record+ by its class.
