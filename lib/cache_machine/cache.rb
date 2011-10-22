@@ -4,14 +4,31 @@ module CacheMachine
   module Cache
     extend ActiveSupport::Concern
 
+    # Enable cache by default.
+    @enabled = true
+
     # Supported by default cache formats.
     @formats = [nil, :ehtml, :html, :json, :xml]
+
+    # Returns if cache is enabled.
+    #
+    # @return [ false, true ]
+    def self.enabled?
+      @enabled
+    end
 
     # Returns currently set formats.
     #
     # @return [Array<Symbol>]
     def self.formats
       @formats
+    end
+
+    # Enables/disables cache.
+    #
+    # @param [ false, true ] is_enabled
+    def self.enabled= is_enabled
+      @enabled = is_enabled
     end
 
     # Sets default formats.
@@ -41,6 +58,8 @@ module CacheMachine
       #
       # @param [ Hash<Symbol, Array> ] associations Cache Map
       def acts_as_cache_machine_for *associations
+        Time.zone ||= ActiveSupport::TimeZone[0]
+
         include CacheMachine::Cache::Map
         cache_associated(associations)
       end

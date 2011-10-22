@@ -34,13 +34,15 @@ module CacheMachine
         # @param [ String, Symbol ] timestamp_name
         # @param [ Hash ] options
         def define_timestamp timestamp_name, options = {}, &block
-          options[:timestamp] = block if block
+          if block_given?
+            options[:timestamp] = block
+          end
 
           define_method timestamp_name do
             fetch_cache_of(timestamp_key_of(timestamp_name), options) do
               CacheMachine::Logger.info "CACHE_MACHINE (define_timestamp): deleting old timestamp '#{timestamp_name}'."
               delete_cache_of timestamp_name # Case when cache expired by time.
-              Time.now.to_i.to_s
+              Time.zone.now.to_i.to_s
             end
           end
         end
@@ -133,7 +135,13 @@ module CacheMachine
         # @return [ String ]
         def cache_key_of _member, options = {}
           timestamp = instance_eval(&options[:timestamp]) if options.has_key? :timestamp
-          [self.class.name, self.to_param, _member, options[:format], options[:page] || 1, timestamp].compact.join '_'
+
+          [ self.class.name,
+            self.to_param,
+            _member,
+            options[:format],
+            options[:page] || 1,
+            timestamp ].flatten.compact.join '/'
         end
 
         # Fetches cache of the member.
@@ -147,20 +155,26 @@ module CacheMachine
         #
         # @return [ * ]
         def fetch_cache_of _member, options = {}, &block
-          expires_in = if expires_at = options[:expires_at]
-            expires_at = expires_at.call if expires_at.kind_of? Proc
+          if CacheMachine::Cache::enabled?
+            expires_in = if expires_at = options[:expires_at]
+              if expires_at.kind_of? Proc
+                expires_at = expires_at.call
+              end
 
-            if expires_at.kind_of? Time
-              expires_at - Time.now
+              if expires_at.kind_of? Time
+                expires_at - Time.zone.now
+              else
+                raise ArgumentError, "expires_at is not a Time"
+              end
             else
-              raise ArgumentError, "expires_at is not a Time"
+              options[:expires_in]
             end
-          else
-            options[:expires_in]
-          end
 
-          CacheMachine::Logger.info "CACHE_MACHINE (fetch_cache_of): reading '#{cache_key}'."
-          Rails.cache.fetch(cache_key_of(_member, options), :expires_in => expires_in, &block)
+            CacheMachine::Logger.info "CACHE_MACHINE (fetch_cache_of): reading '#{cache_key}'."
+            Rails.cache.fetch(cache_key_of(_member, options), :expires_in => expires_in, &block)
+          else
+            yield
+          end
         end
 
         # Removes all caches using map.
@@ -197,7 +211,7 @@ module CacheMachine
         #
         # @return [ String ]
         def timestamp_key_of anything
-          [self.class.name, self.to_param, anything, 'timestamp'].join '_'
+          [self.class.name, self.to_param, anything, 'timestamp'].join '/'
         end
 
         # Returns timestamp of anything from memcached.
@@ -206,16 +220,20 @@ module CacheMachine
         #
         # @return [ String ]
         def timestamp_of anything
-          key = timestamp_key_of anything
-          CacheMachine::Logger.info "CACHE_MACHINE (timestamp_of): reading timestamp '#{key}'."
-          Rails.cache.fetch(key) { Time.now.to_i.to_s }
+          if CacheMachine::Cache::enabled?
+            key = timestamp_key_of anything
+            CacheMachine::Logger.info "CACHE_MACHINE (timestamp_of): reading timestamp '#{key}'."
+            Rails.cache.fetch(key) { Time.zone.now.to_i.to_s }
+          else
+            Time.zone.now.to_i.to_s
+          end
         end
 
         # Returns cache key of +anything+ with timestamp attached.
         #
         # @return [ String ]
         def timestamped_key_of anything, options = {}
-          [cache_key_of(anything, options), timestamp_of(anything)].join '_'
+          [cache_key_of(anything, options), timestamp_of(anything)].join '/'
         end
 
         # Deletes cache of anything from memory.

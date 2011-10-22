@@ -6,10 +6,10 @@ describe CacheMachine do
 
   describe "#cache_key_of" do
     it "generates association cache keys" do
-      subject.cache_key_of(:anything).should eql("Cacher_foo_anything_1")
-      subject.cache_key_of(:anything, :format => :ehtml).should eql("Cacher_foo_anything_ehtml_1")
-      subject.cache_key_of(:anything, :page => 2).should eql("Cacher_foo_anything_2")
-      subject.cache_key_of(:anything, :format => :ehtml, :page => 2).should eql("Cacher_foo_anything_ehtml_2")
+      subject.cache_key_of(:anything).should eql("Cacher/foo/anything/1")
+      subject.cache_key_of(:anything, :format => :ehtml).should eql("Cacher/foo/anything/ehtml/1")
+      subject.cache_key_of(:anything, :page => 2).should eql("Cacher/foo/anything/2")
+      subject.cache_key_of(:anything, :format => :ehtml, :page => 2).should eql("Cacher/foo/anything/ehtml/2")
     end
   end
 
@@ -29,6 +29,17 @@ describe CacheMachine do
       it "calls for instance methods" do
         subject.should_receive(:execute_timestamp).once
         subject.fetch_cache_of(:anything, :timestamp => :dynamic_timestamp)
+      end
+
+      it "passes expires_in param" do
+        Rails.cache.should_receive(:fetch).with(anything(), :expires_in => 10.minutes).once
+        subject.fetch_cache_of(:anything, :expires_in => 10.minutes)
+      end
+
+      it "passes expires_at param" do
+        Time.stub_chain("zone.now").and_return(Time.parse('01/01/01'))
+        Rails.cache.should_receive(:fetch).with(anything(), :expires_in => 10.minutes).once
+        subject.fetch_cache_of(:anything, :expires_at => 10.minutes.from_now)
       end
     end
   end
