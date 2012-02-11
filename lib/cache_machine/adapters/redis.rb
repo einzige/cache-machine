@@ -11,13 +11,13 @@ module CacheMachine
         CacheMachine::Logger.info "CACHE_MACHINE: initialized Redis adapter"
       end
 
-      def association_ids target, association
+      def association_ids target, association, primary_key = 'id'
         result = []
         key = get_map_key(target, association)
 
         if @redis.exists(key)
           result = @redis.smembers(key)
-        elsif (result = target.send(association).map &:to_param).any? # TODO(!#): REPLACE WITH FIELD INSTEAD OF TO_PARAM
+        elsif (result = target.send(association).map &primary_key.to_sym).any? # TODO(!#): REPLACE WITH FIELD INSTEAD OF TO_PARAM
           @redis.multi { result.each { |id| @redis.sadd key, id } }   # TODO(!#): INVESTIGATE WHY ID CANNOT BE PASSED AS AN ARRAY
         end
 

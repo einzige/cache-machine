@@ -125,6 +125,16 @@ module CacheMachine
 
       module InstanceMethods
 
+        # Returns associated relation from cache.
+        #
+        # @param [ String, Symbol ] association_name
+        #
+        # @return [ ActiveRecord::Relation ]
+        def associated_from_cache association_name
+          klass = self.class.reflect_on_association(association_name).klass
+          klass.where(klass.primary_key => CacheMachine::Cache::storage_adapter.association_ids(self, association_name))
+        end
+
         # Returns cache key of the member.
         #
         # @param [ Symbol ] _member

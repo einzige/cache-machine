@@ -3,6 +3,21 @@ require 'spec_helper'
 describe CacheMachine do
   subject { Cacher.create(:name => 'foo') }
 
+  describe "#associated_from_cache" do
+    describe "#association_ids" do
+      let(:target) { Cacher.create(:name => 'foo') }
+
+      before :each do
+        target.has_many_through_cacheables.create :id => 1
+        target.has_many_through_cacheables.create :id => 2
+      end
+
+      it "works" do
+        target.associated_from_cache(:has_many_through_cacheables).all.map(&:id).should == [1,2]
+      end
+    end
+  end
+
   describe "#cache_key_of" do
     it "generates association cache keys" do
       subject.cache_key_of(:anything).should eql("Cacher_foo_anything_1")

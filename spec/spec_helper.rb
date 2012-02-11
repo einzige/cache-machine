@@ -20,6 +20,8 @@ if ENV["ADAPTER"] == 'redis'
   CacheMachine::Cache::map_adapter = adapter
   CacheMachine::Cache::storage_adapter = adapter
   CacheMachine::Cache::timestamps_adapter = adapter
+
+  adapter.redis.flushdb
 end
 
 ActiveRecord::Base.logger = Logger.new(nil)

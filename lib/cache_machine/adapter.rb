@@ -20,7 +20,7 @@ module CacheMachine
       raise "cannot be called directly"
     end
 
-    def association_ids target, association
+    def association_ids target, association, primary_key = 'id'
       raise "cannot be called directly"
     end
 
