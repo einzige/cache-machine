@@ -1,8 +1,15 @@
 module CacheMachine
   module Cache
-
     module Map
       extend ActiveSupport::Concern
+
+      # Draws cache dependency graph.
+      #
+      # @return [ nil ]
+      def draw &block
+        Mapper.new(self).instance_exec(&block)
+        nil
+      end
 
       included do
         CacheMachine::Logger.info "CACHE_MACHINE: bind cache-map on class #{self.name}"
