@@ -160,7 +160,7 @@ module CacheMachine
           end
 
           CacheMachine::Logger.info "CACHE_MACHINE (fetch_cache_of): reading '#{cache_key}'."
-          Rails.cache.fetch(cache_key_of(_member, options), :expires_in => expires_in, &block)
+          CacheMachine::Cache::storage_adapter.fetch(cache_key_of(_member, options), :expires_in => expires_in, &block)
         end
 
         # Removes all caches using map.
@@ -186,7 +186,7 @@ module CacheMachine
             page_nr = 0; begin
               cache_key = cache_key_of(_member, {:format => cache_format, :page => page_nr += 1})
               CacheMachine::Logger.info "CACHE_MACHINE (delete_cache_of_only): deleting '#{cache_key}'"
-            end while Rails.cache.delete(cache_key)
+            end while CacheMachine::Cache::storage_adapter.delete(cache_key)
           end
           reset_timestamp_of _member
         end
@@ -208,7 +208,7 @@ module CacheMachine
         def timestamp_of anything
           key = timestamp_key_of anything
           CacheMachine::Logger.info "CACHE_MACHINE (timestamp_of): reading timestamp '#{key}'."
-          Rails.cache.fetch(key) { Time.now.to_i.to_s }
+          CacheMachine::Cache::timestamps_adapter.fetch_timestamp(key) { Time.now.to_i.to_s }
         end
 
         # Returns cache key of +anything+ with timestamp attached.
@@ -222,7 +222,7 @@ module CacheMachine
         def reset_timestamp_of anything
           cache_key = timestamp_key_of anything
           CacheMachine::Logger.info "CACHE_MACHINE (reset_timestamp_of): deleting '#{cache_key}'."
-          Rails.cache.delete(cache_key)
+          CacheMachine::Cache::timestamps_adapter.reset_timestamp(cache_key)
         end
 
         protected
