@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'fixtures'
 
 describe CacheMachine do
   subject { Cacher.create(:name => 'foo') }
