@@ -144,4 +144,3 @@ module CacheMachine
     end
   end
 end
-

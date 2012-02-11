@@ -7,6 +7,12 @@ module CacheMachine
         CacheMachine::Logger.info "CACHE_MACHINE: initialized default Rails adapter"
       end
 
+      def association_ids target, association
+        ::Rails.cache.fetch(get_map_key(target, association)) do
+          target.send(association).map &:to_param # TODO(!#): REPLACE WITH FIELD INSTEAD OF TO_PARAM
+        end
+      end
+
       def fetch key, options = {}, &block
         ::Rails.cache.fetch(get_content_key(key), options, &block)
       end

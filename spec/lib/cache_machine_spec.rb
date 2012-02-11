@@ -22,7 +22,7 @@ describe CacheMachine do
     context "timestamps" do
       it "works with timestamps" do
         subject.should_receive(:cache_key_of).with(:anything, hash_including(:timestamp => :dynamic_timestamp)).and_return "returned_stamp"
-        Rails.cache.should_receive(:fetch).with("Content#returned_stamp", :expires_in => nil).once
+        CacheMachine::Cache::storage_adapter.should_receive(:fetch).with("returned_stamp", :expires_in => nil).once
         subject.fetch_cache_of(:anything, :timestamp => :dynamic_timestamp)
       end
 

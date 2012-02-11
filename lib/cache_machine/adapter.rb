@@ -20,6 +20,10 @@ module CacheMachine
       raise "cannot be called directly"
     end
 
+    def association_ids target, association
+      raise "cannot be called directly"
+    end
+
     def write_timestamp name, &block
       raise "cannot be called directly"
     end
