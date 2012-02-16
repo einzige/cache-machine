@@ -26,9 +26,9 @@ module CacheMachine
 
       # Defines model as a source of ids for map.
       #
-      # @param [ Class ] model
-      # @param [ Hash ]options
-      def resource (model, options = {})
+      # @param [Class] model
+      # @param [Hash]options
+      def resource(model, options = {})
         scoped :root, :resource do
           @cache_resource = model
 
@@ -48,9 +48,9 @@ module CacheMachine
 
       # Adds callbacks to fill the map with model ids and uses callback to reset cache for every instance of the model.
       #
-      # @param [ String, Symbol ] collection_name
-      # @param [ Hash ] options
-      def collection (collection_name, options = {}, &block)
+      # @param [String, Symbol] collection_name
+      # @param [Hash] options
+      def collection(collection_name, options = {}, &block)
         scoped :resource, :collection do
           options.reverse_merge! DEFAULT_COLLECTION_OPTIONS
 
@@ -70,9 +70,9 @@ module CacheMachine
 
       # Appends member to the collection.
       #
-      # @param [ String ] member_name
-      # @param [ Hash ] options
-      def member (member_name, options = {})
+      # @param [String] member_name
+      # @param [Hash] options
+      def member(member_name, options = {})
         scoped :collection, :member do
           (@members ||= {})[member_name] = options
         end
@@ -80,7 +80,7 @@ module CacheMachine
 
       # Returns members of collection in scope.
       #
-      # @return [ Hash ]
+      # @return [Hash]
       def get_members
         @members = {}
         yield if block_given?
@@ -91,25 +91,25 @@ module CacheMachine
 
         # Checks if method can be called from the scope.
         #
-        # @param [ Symbol ] scope
-        def validate_scope! (scope)
+        # @param [Symbol] scope
+        def validate_scope!(scope)
           raise "#{scope} can not be called in #{@scope} scope" if @scope != scope
         end
   
         # Changes scope from one to another.
         #
-        # @param [ Symbol ] from
-        # @param [ Symbol ] to
-        def change_scope! (from, to)
-          validate_scope! (from)
+        # @param [Symbol] from
+        # @param [Symbol] to
+        def change_scope!(from, to)
+          validate_scope!(from)
           @scope = to
         end
   
         # Runs code in the given scope.
         #
-        # @param [ Symbol ] from
-        # @param [ Symbol ] to
-        def scoped (from, to)
+        # @param [Symbol] from
+        # @param [Symbol] to
+        def scoped(from, to)
           change_scope! from, to
           yield
           change_scope! to, from

@@ -6,60 +6,70 @@ module CacheMachine
     class Redis < CacheMachine::Adapter
       attr_accessor :redis
 
-      def initialize *options
+      def initialize(*options)
         @redis = ::Redis.new(*options)
         CacheMachine::Logger.info "CACHE_MACHINE: initialized Redis adapter"
       end
 
-      def association_ids target, association, primary_key = 'id'
-        result = []
-        key = get_map_key(target, association)
-
-        if @redis.exists(key)
-          result = @redis.smembers(key)
-        elsif (result = target.send(association).map &primary_key.to_sym).any? # TODO(!#): REPLACE WITH FIELD INSTEAD OF TO_PARAM
-          @redis.multi { result.each { |id| @redis.sadd key, id } }   # TODO(!#): INVESTIGATE WHY ID CANNOT BE PASSED AS AN ARRAY
-        end
-
-        result
+      def association_ids(target, association)
+        get_ids(get_map_key(target, association)) { target.association_ids(association) }
       end
 
-      def fetch key, options = {}, &block
+      def reverse_association_ids(target, resource, association)
+        get_ids(get_reverse_map_key(target, resource)) { target.cache_map_ids(resource, association) }
+      end
+
+      def fetch(key, options = {}, &block)
         key = get_content_key(key)
         block_given? ? exec_multi_command(:setnx, key, options, &block) : @redis.get(key)
       end
 
-      def delete key
+      def delete(key)
         @redis.del(get_content_key(key)).to_i > 0
       end
 
-      def append_id_to_map target, association, id
+      def append_id_to_map(target, association, id)
         @redis.sadd(get_map_key(target, association), id)
       end
 
-      def write_timestamp name, options = {}, &block
+      def append_id_to_reverse_map(target, resource, id)
+        @redis.sadd(get_reverse_map_key(target, resource), id)
+      end
+
+      def write_timestamp(name, options = {}, &block)
         exec_multi_command(:set, get_timestamp_key(name), options, &block)
       end
 
-      def fetch_timestamp name, options = {}, &block
+      def fetch_timestamp(name, options = {}, &block)
         exec_multi_command(:setnx, get_timestamp_key(name), options, &block)
       end
 
-      def reset_timestamp name
+      def reset_timestamp(name)
         @redis.del(get_timestamp_key(name))
       end
 
       protected
 
-        def exec_multi_command command, key, options, &block
-          content = block.call
+        def exec_multi_command(command, key, options)
+          content = yield
 
           @redis.multi do
-            @redis.send(command, key, content) # TODO(#!) CHECK IF YIELD CAME FROM &BLOCK
+            @redis.send(command, key, content)
             @redis.expire(key, options[:expires_in].to_i) if options[:expires_in]
           end
 
           content
+        end
+
+        def get_ids(key)
+          if @redis.exists(key)
+            @redis.smembers(key)
+          else
+            # TODO(!#): INVESTIGATE WHY ID CANNOT BE PASSED AS AN ARRAY
+            result = yield
+            @redis.multi { result.each { |id| @redis.sadd key, id } }
+            result
+          end
         end
     end
   end
