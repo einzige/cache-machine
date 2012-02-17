@@ -41,7 +41,7 @@ module CacheMachine
           collection = self.cache_map_members[resource_instance.class][association_name]
 
           if collection && collection[:members]
-            collection[:members].each do |member|
+            collection[:members].each do |member, options|
               CacheMachine::Cache::Map.reset_cache_on_map(resource_instance.class,
                                                           resource_instance.send(resource_instance.class.primary_key),
                                                           member)
@@ -57,7 +57,7 @@ module CacheMachine
         # @param [ Class ] cache_resource
         def update_resource_collections_cache!(cache_resource)
           self.class.cache_map_members[cache_resource].each do |collection_name, options|
-            ((options[:members] || []) << collection_name).each do |member|
+            ((options[:members].try(:keys) || []) << collection_name).each do |member|  # FIXME
               cache_map_ids = CacheMachine::Cache::map_adapter.reverse_association_ids(self, cache_resource, collection_name)
               CacheMachine::Cache::Map.reset_cache_on_map(cache_resource, cache_map_ids, member)
             end

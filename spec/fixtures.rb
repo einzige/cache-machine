@@ -67,14 +67,6 @@ end
 class Cacher < ActiveRecord::Base
   set_table_name TARGET_TABLE_NAME
 
-  cache_map :polymorphics,
-            :child_cachers,
-            :has_many_cacheables => :dependent_cache,
-            :has_many_through_cacheables => :dependent_cache,
-            :has_and_belongs_to_many_cacheables => :dependent_cache
-
-  define_timestamp(:dynamic_timestamp) { execute_timestamp }
-
   has_and_belongs_to_many :has_and_belongs_to_many_cacheables, :class_name => 'HasAndBelongsToManyCacheable'
   has_many :has_many_cacheables, :class_name => 'HasManyCacheable'
   has_many :joins, :class_name => 'Join'
