@@ -43,8 +43,8 @@ module CacheMachine
       "Content##{key}"
     end
 
-    def get_reverse_map_key(target, resource)
-      "ReverseMap##{target.class.name}|#{target.send(target.class.primary_key)}|#{resource.name}"
+    def get_reverse_map_key(target, association)
+      "ReverseMap##{target.class.name}|#{target.send(target.class.primary_key)}|#{association}"
     end
 
     def get_map_key(target, association)

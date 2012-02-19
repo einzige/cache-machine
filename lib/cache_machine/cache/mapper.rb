@@ -21,8 +21,9 @@ module CacheMachine
       attr_reader :cache_resource
       attr_reader :scope
 
-      def initialize
+      def initialize &block
         change_scope! nil, :root
+        instance_eval(&block) if block_given?
       end
 
       # Defines model as a source of ids for map.
@@ -97,7 +98,7 @@ module CacheMachine
         def validate_scope!(scope)
           raise "#{scope} can not be called in #{@scope} scope" if @scope != scope
         end
-  
+
         # Changes scope from one to another.
         #
         # @param [Symbol] from
@@ -106,7 +107,7 @@ module CacheMachine
           validate_scope!(from)
           @scope = to
         end
-  
+
         # Runs code in the given scope.
         #
         # @param [Symbol] from

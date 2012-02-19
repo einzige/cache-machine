@@ -17,6 +17,8 @@ module CacheMachine
         # @param [ String, Symbol ] collection_name
         # @param [ Hash ] options
         def register_cache_dependency(cache_resource, collection_name, options = {})
+          return if self.cache_map_members[cache_resource].try('[]', collection_name)
+
           options.reverse_merge!(CacheMachine::Cache::Collection::DEFAULT_DEPENDENCY_OPTIONS)
 
           # Save dependency options.
@@ -57,7 +59,7 @@ module CacheMachine
         # @param [ Class ] cache_resource
         def update_resource_collections_cache!(cache_resource)
           self.class.cache_map_members[cache_resource].each do |collection_name, options|
-            ((options[:members].try(:keys) || []) << collection_name).each do |member|  # FIXME
+            ((options[:members].try(:keys) || []) << collection_name).each do |member|  # FIXME: use with options and formats
               cache_map_ids = CacheMachine::Cache::map_adapter.reverse_association_ids(self, cache_resource, collection_name)
               CacheMachine::Cache::Map.reset_cache_on_map(cache_resource, cache_map_ids, member)
             end

@@ -20,11 +20,15 @@ describe CacheMachine::Cache::Mapper do
   end
 
   describe "#collection" do
+    let(:register_options) do
+      { :scope   => nil,
+        :on      => :after_save,
+        :members => { :one => {}, :two => {} }
+      }
+    end
+
     before :each do
-      Join.should_receive(:register_cache_dependency).with(Cacher, :joins, { :scope   => nil,
-                                                                             :members => { :one => {},
-                                                                                           :two => {}},
-                                                                             :on      => :after_save })
+      Join.should_receive(:register_cache_dependency).with(Cacher, :joins, register_options)
 
       subject.resource(Cacher) do
         collection(:joins) do
