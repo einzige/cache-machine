@@ -7,8 +7,8 @@ describe CacheMachine::Cache::Collection do
 
   before :each do
     CacheMachine::Cache::Mapper.new do
-      resource(Cacher) do
-        collection(:joins) do
+      resource Cacher do
+        collection :joins do
           member :one
           member :two
         end
@@ -35,12 +35,14 @@ describe CacheMachine::Cache::Collection do
   end
 
   describe "#update_resource_collections_cache!" do
+    after :each do
+      join # Create join object and raise reset cache procedure
+    end
+
     it "works" do
       CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).once.with(Cacher, [cacher.id], :one)
       CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).once.with(Cacher, [cacher.id], :two)
       CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).once.with(Cacher, [cacher.id], :joins)
-
-      join # Create join object and raise reset cache procedure
     end
   end
 end
