@@ -2,6 +2,7 @@ module CacheMachine
   module Cache
     module Collection
       extend ActiveSupport::Concern
+
       DEFAULT_DEPENDENCY_OPTIONS = { :on => :after_save, :scope => :scoped }
 
       included do
@@ -90,8 +91,8 @@ module CacheMachine
           resource_pk         = cache_resource.primary_key.to_sym
 
           cache_resource.joins(collection_name).
-                         where("#{table_name}.#{pk} = #{self.send(pk)}").
-                         select("#{resource_table_name}.#{resource_pk}").map &resource_pk
+                         where(collection_name => { pk => self.send(pk) }).
+                         select("#{resource_table_name}.#{resource_pk}").to_a.map &resource_pk
         end
       end
     end

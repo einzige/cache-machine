@@ -4,6 +4,9 @@ describe CacheMachine::Cache::Collection do
 
   let(:cacher) { cacher = Cacher.create }
   let(:join)   { cacher.joins.create    }
+  let(:hmt)    { HasManyThroughCacheable.create(:cachers => [cacher]) }
+  let(:hm)     { cacher.has_many_cacheables.create }
+  let(:phm)    { cacher.polymorphics.create }
 
   before :each do
     CacheMachine::Cache::Mapper.new do
@@ -12,6 +15,9 @@ describe CacheMachine::Cache::Collection do
           member :one
           member :two
         end
+        collection :has_many_through_cacheables
+        collection :has_many_cacheables
+        collection :polymorphics
       end
     end
   end
@@ -35,14 +41,41 @@ describe CacheMachine::Cache::Collection do
   end
 
   describe "#update_resource_collections_cache!" do
-    after :each do
-      join # Create join object and raise reset cache procedure
+
+    context "on has one relation" do
+      after(:each) { join }
+
+      it "works" do
+        CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).with(Cacher, [cacher.id], :one)
+        CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).with(Cacher, [cacher.id], :two)
+        CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).with(Cacher, [cacher.id], :joins)
+      end
     end
 
-    it "works" do
-      CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).once.with(Cacher, [cacher.id], :one)
-      CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).once.with(Cacher, [cacher.id], :two)
-      CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).once.with(Cacher, [cacher.id], :joins)
+    context "on has many relation" do
+      after(:each) { hm }
+
+      it "works" do
+        CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).with(Cacher, [cacher.id], :has_many_cacheables)
+      end
+    end
+
+    context "on has many through relation" do
+      before(:each) { hmt }
+      after(:each) { hmt.save }
+
+      it "works" do
+        CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).with(Cacher, [cacher.id], :has_many_through_cacheables)
+      end
+    end
+
+    context "on polymorphic relation" do
+      before(:each) { phm }
+      after(:each) { phm.save }
+
+      it "works" do
+        CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).with(Cacher, [cacher.id], :polymorphics)
+      end
     end
   end
 end

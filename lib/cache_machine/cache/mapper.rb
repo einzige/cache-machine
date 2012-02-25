@@ -57,10 +57,13 @@ module CacheMachine
         # @param [String, Symbol] collection_name
         # @param [Hash] options
         def collection(collection_name, options = {}, &block)
+          reflection = @cache_resource.reflect_on_association(collection_name)
+          reflection or raise ArgumentError, "Relation '#{collection_name}' is not set on the class #{@cache_resource}"
+
           scoped :resource, :collection do
             options.reverse_merge! DEFAULT_COLLECTION_OPTIONS
 
-            collection_klass   = @cache_resource.reflect_on_association(collection_name).klass
+            collection_klass   = reflection.klass
             collection_members = get_members(&block)
 
             unless collection_klass.include? CacheMachine::Cache::Collection

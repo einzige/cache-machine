@@ -45,6 +45,14 @@ describe CacheMachine::Cache::Mapper do
     it "changes scope back" do
       subject.scope.should == :root
     end
+
+    it "raises an exception when collection is not defined as an association" do
+      lambda {
+        subject.resource(Cacher) do
+          collection :unexisted_relation
+        end
+      }.should raise_error(ArgumentError, "Relation 'unexisted_relation' is not set on the class Cacher")
+    end
   end
 
   # TODO (SZ): missing specs
