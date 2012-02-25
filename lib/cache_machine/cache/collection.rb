@@ -8,6 +8,46 @@ module CacheMachine
       included do
         cattr_accessor :cache_map_members
         self.cache_map_members = {}
+
+        # Updates cache of the related resources.
+        #
+        # @param [ Class ] cache_resource
+        def update_resource_collections_cache!(cache_resource)
+          self.class.cache_map_members[cache_resource].each do |collection_name, options|
+            ((options[:members].try(:keys) || []) << collection_name).each do |member|  # FIXME: use with options and formats
+              cache_map_ids = CacheMachine::Cache::map_adapter.reverse_association_ids(self, cache_resource, collection_name)
+              CacheMachine::Cache::Map.reset_cache_on_map(cache_resource, cache_map_ids, member)
+            end
+          end
+        end
+
+        # Updates cache of the related resource.
+        #
+        # @param [ Class ] cache_resource
+        def update_dependent_cache!(cache_resource = nil)
+          if cache_resource
+            update_resource_collections_cache!(cache_resource)
+          else
+            self.class.cache_map_members.keys.each &:update_resource_collections_cache!
+          end
+        end
+
+        # Returns all ids from resource associated with this collection member.
+        #
+        # @param [ Class ] cache_resource
+        # @param [ String, Symbol ] collection_name
+        #
+        # @return [ Array ]
+        def cache_map_ids(cache_resource, collection_name)
+          pk                  = self.class.primary_key.to_sym
+          table_name          = self.class.table_name
+          resource_table_name = cache_resource.table_name
+          resource_pk         = cache_resource.primary_key.to_sym
+
+          cache_resource.joins(collection_name).
+              where(collection_name => { pk => self.send(pk) }).
+              select("#{resource_table_name}.#{resource_pk}").to_a.map &resource_pk
+        end
       end
 
       module ClassMethods
@@ -50,49 +90,6 @@ module CacheMachine
                                                           member)
             end
           end
-        end
-      end
-
-      module InstanceMethods
-
-        # Updates cache of the related resources.
-        #
-        # @param [ Class ] cache_resource
-        def update_resource_collections_cache!(cache_resource)
-          self.class.cache_map_members[cache_resource].each do |collection_name, options|
-            ((options[:members].try(:keys) || []) << collection_name).each do |member|  # FIXME: use with options and formats
-              cache_map_ids = CacheMachine::Cache::map_adapter.reverse_association_ids(self, cache_resource, collection_name)
-              CacheMachine::Cache::Map.reset_cache_on_map(cache_resource, cache_map_ids, member)
-            end
-          end
-        end
-
-        # Updates cache of the related resource.
-        #
-        # @param [ Class ] cache_resource
-        def update_dependent_cache!(cache_resource = nil)
-          if cache_resource
-            update_resource_collections_cache!(cache_resource)
-          else
-            self.class.cache_map_members.keys.each &:update_resource_collections_cache!
-          end
-        end
-
-        # Returns all ids from resource associated with this collection member.
-        #
-        # @param [ Class ] cache_resource
-        # @param [ String, Symbol ] collection_name
-        #
-        # @return [ Array ]
-        def cache_map_ids(cache_resource, collection_name)
-          pk                  = self.class.primary_key.to_sym
-          table_name          = self.class.table_name
-          resource_table_name = cache_resource.table_name
-          resource_pk         = cache_resource.primary_key.to_sym
-
-          cache_resource.joins(collection_name).
-                         where(collection_name => { pk => self.send(pk) }).
-                         select("#{resource_table_name}.#{resource_pk}").to_a.map &resource_pk
         end
       end
     end

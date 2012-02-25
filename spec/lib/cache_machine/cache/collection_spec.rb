@@ -4,8 +4,8 @@ describe CacheMachine::Cache::Collection do
 
   let(:cacher) { cacher = Cacher.create }
   let(:join)   { cacher.joins.create    }
-  let(:hmt)    { HasManyThroughCacheable.create(:cachers => [cacher]) }
   let(:hm)     { cacher.has_many_cacheables.create }
+  let(:hmt)    { HasManyThroughCacheable.create(:cachers => [cacher]) }
   let(:phm)    { cacher.polymorphics.create }
 
   before :each do
