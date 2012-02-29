@@ -5,9 +5,10 @@ module CacheMachine
     require 'cache_machine/cache/timestamp'
 
     # CacheMachine::Cache::Map.draw do
-    #   resource Venue, :timestamp => false do                                                                          # Says what Venue class should be used as a source of ids for map
-    #     collection :events, :scope => :active, :formats => [:html, :json], :timestamp => true, :on => :after_save do  # Says what every event should fill the map with venue ids and use callback to reset cache for every venue.
-    #       member :upcoming_events, :formats => [:xml]                                                                 # Says what this method also needs to be reset.
+    #   resource Venue, :timestamp => false do                          # Says what Venue class should be used as a source of ids for map
+    #     collection :events, :scope => :active, :on => :after_save do  # Says what every event should fill the map with venue ids and use callback to reset cache for every venue.
+    #       member :upcoming_events                                     # Says what this method also needs to be reset.
+    #       member :similar_events
     #     end
     #   end
     #

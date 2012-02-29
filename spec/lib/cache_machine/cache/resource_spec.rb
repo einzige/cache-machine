@@ -32,21 +32,6 @@ describe CacheMachine::Cache::Resource do
     end
   end
 
-  describe "#association_ids" do
-    it "works" do
-      join
-      cacher.association_ids(:joins).should == [join.id]
-    end
-  end
-
-  describe "#associated_from_cache" do
-    it "works" do
-      hmt
-      cacher.associated_from_cache(:has_many_through_cacheables).should == [hmt]
-      cacher.associated_from_cache(:has_many_through_cacheables).should == [hmt]
-    end
-  end
-
   describe "#fetch_cache_of" do
     it "works" do
       cacher.fetch_cache_of(:has_many_cacheables) { 'cached' }.should == 'cached'
