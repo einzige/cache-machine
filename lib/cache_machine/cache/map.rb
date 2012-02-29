@@ -3,6 +3,8 @@ module CacheMachine
     require 'cache_machine/cache/mapper'
 
     class Map
+      cattr_reader :registered_models
+      @@registered_models = []
 
       # Draws cache dependency graph.
       #
@@ -10,6 +12,21 @@ module CacheMachine
       def draw(&block)
         Mapper.new.instance_eval(&block)
         nil
+      end
+
+      # Fills association map in cache.
+      #
+      # @param [ Class ] resource
+      def self.fill_associations_map(resource)
+        resource.find_each do |instance|
+          resource.cached_collections.each do |collection_name|
+            CacheMachine::Cache::map_adapter.association_ids(instance, collection_name)
+            association_class = resource.reflect_on_association(collection_name).klass
+            association_class.find_each do |associated_instance|
+              CacheMachine::Cache::map_adapter.reverse_association_ids(associated_instance, resource, collection_name)
+            end
+          end
+        end
       end
 
       # Returns cache key for cache resource.
