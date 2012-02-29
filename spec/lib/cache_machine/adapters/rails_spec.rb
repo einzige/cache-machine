@@ -5,6 +5,14 @@ if ENV["ADAPTER"] != 'redis'
   describe CacheMachine::Adapters::Rails do
     subject { CacheMachine::Cache::map_adapter }
 
+    before :each do
+      CacheMachine::Cache::Mapper.new do
+        resource Cacher do
+          collection :has_many_cacheables
+        end
+      end
+    end
+
     describe "#association_ids" do
       let(:target) { Cacher.create(:name => 'foo') }
 
@@ -16,7 +24,7 @@ if ENV["ADAPTER"] != 'redis'
 
       context "with clear cache" do
         it("returns ids of an association") do
-          subject.association_ids(target, :has_many_cacheables).should =~ ["1", "2"]
+          subject.association_ids(target, :has_many_cacheables).should =~ [1, 2]
         end
       end
 

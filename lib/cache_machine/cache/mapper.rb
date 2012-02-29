@@ -73,6 +73,7 @@ module CacheMachine
             collection_klass.register_cache_dependency @cache_resource, collection_name, { :scope   => options[:scope],
                                                                                            :members => collection_members,
                                                                                            :on      => options[:on] }
+            @cache_resource.cached_collections |= [collection_name]
           end
         end
 

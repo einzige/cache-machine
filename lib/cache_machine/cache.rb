@@ -15,7 +15,7 @@ module CacheMachine
     # Sets adapter used for storing maps of cache.
     #
     # @param [CacheMachine::Adapter]
-    def self.map_adapter= adapter
+    def self.map_adapter=(adapter)
       @map_adapter = adapter
     end
 
@@ -29,7 +29,7 @@ module CacheMachine
     # Sets adapter used for storing content being cached.
     #
     # @param [CacheMachine::Adapter]
-    def self.storage_adapter= adapter
+    def self.storage_adapter=(adapter)
       @storage_adapter = adapter
     end
 
@@ -43,7 +43,7 @@ module CacheMachine
     # Sets adapter used for storing content being cached.
     #
     # @param [CacheMachine::Adapter]
-    def self.timestamps_adapter= adapter
+    def self.timestamps_adapter=(adapter)
       @timestamps_adapter = adapter
     end
   end

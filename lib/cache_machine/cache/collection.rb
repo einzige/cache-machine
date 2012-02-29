@@ -6,8 +6,11 @@ module CacheMachine
       DEFAULT_DEPENDENCY_OPTIONS = { :on => :after_save, :scope => :scoped }
 
       included do
+        include CacheMachine::Cache::Associations
+
         cattr_accessor :cache_map_members
         self.cache_map_members = {}
+
 
         # Updates cache of the related resources.
         #
@@ -40,7 +43,6 @@ module CacheMachine
         # @return [ Array ]
         def cache_map_ids(cache_resource, collection_name)
           pk                  = self.class.primary_key.to_sym
-          table_name          = self.class.table_name
           resource_table_name = cache_resource.table_name
           resource_pk         = cache_resource.primary_key.to_sym
 
@@ -76,6 +78,10 @@ module CacheMachine
           [*options[:on]].each { |callback| self.send(callback, &reset_cache_proc) }
         end
 
+        # Resets cache of associated resource instance.
+        #
+        # @param resource_instance
+        # @param [ String, Symbol ] association_name
         def reset_resource_cache(resource_instance, association_name)
           CacheMachine::Cache::Map.reset_cache_on_map(resource_instance.class,
                                                       resource_instance.send(resource_instance.class.primary_key),

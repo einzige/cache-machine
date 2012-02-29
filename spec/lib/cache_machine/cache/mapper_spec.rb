@@ -54,6 +54,4 @@ describe CacheMachine::Cache::Mapper do
       }.should raise_error(ArgumentError, "Relation 'unexisted_relation' is not set on the class Cacher")
     end
   end
-
-  # TODO (SZ): missing specs
 end

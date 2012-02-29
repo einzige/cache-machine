@@ -6,17 +6,26 @@ if ENV["ADAPTER"] == 'redis'
   describe CacheMachine::Adapters::Redis do
     subject { CacheMachine::Cache::map_adapter }
 
+    before :each do
+      CacheMachine::Cache::Mapper.new do
+        resource Cacher do
+          collection :has_many_through_cacheables
+        end
+      end
+    end
+
     describe "#association_ids" do
       let(:target) { Cacher.create(:name => 'foo') }
+      let(:hmt1) { target.has_many_through_cacheables.create }
+      let(:hmt2) { target.has_many_through_cacheables.create }
 
       before :each do
-        target.has_many_through_cacheables.create :id => 1
-        target.has_many_through_cacheables.create :id => 2
+        hmt1 and hmt2
       end
 
       context "primary direction" do
         after :each do
-          subject.association_ids(target, :has_many_through_cacheables, 'id').should =~ ["1", "2"]
+          subject.association_ids(target, :has_many_through_cacheables).should =~ [hmt1.id, hmt2.id]
         end
 
         context "with clear cache" do
@@ -25,7 +34,8 @@ if ENV["ADAPTER"] == 'redis'
 
         context "filled cache" do
           it "returns ids from cache if has already requested before" do
-            subject.redis.should_receive(:smembers).and_return ["1", "2"]
+            subject.association_ids(target, :has_many_through_cacheables)
+            subject.redis.should_receive(:smembers).and_return [hmt1.id, hmt2.id]
           end
         end
       end

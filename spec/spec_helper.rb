@@ -24,6 +24,7 @@ if ENV["ADAPTER"] == 'redis'
 end
 
 ActiveRecord::Base.logger = Logger.new(nil)
+CacheMachine::Logger.logger = Logger.new(STDOUT)
 
 Object.const_set "RAILS_CACHE", ActiveSupport::Cache.lookup_store(:memory_store) # You can set memcached
 
