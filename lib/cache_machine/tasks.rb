@@ -3,6 +3,7 @@ namespace :cache_machine do
   task :fill_associations_map, [:models] => :environment do |t, args|
     models = args[:models] ? args[:models].map(&:constantize) : CacheMachine::Cache::Map.registered_models
     models.each do |model|
+      puts "Processing #{model}..."
       CacheMachine::Cache::Map.fill_associations_map model
     end
   end
