@@ -38,6 +38,25 @@ describe CacheMachine::Cache::Collection do
       join.should_receive(:update_resource_collections_cache!).once.with(Cacher)
       join.save
     end
+
+    it "hooks update_map callback" do
+      Join.any_instance.should_receive(:update_cache_map!).once.with(cacher, :joins)
+      cacher.joins.create
+    end
+  end
+
+  describe "#update_map!" do
+    after :each do
+      cacher.joins.create
+    end
+
+    it "updates direct association map" do
+      CacheMachine::Cache.map_adapter.should_receive(:append_id_to_map).with(cacher, :joins, kind_of(Numeric))
+    end
+
+    it "updates reverse collection map" do
+      CacheMachine::Cache.map_adapter.should_receive(:append_id_to_reverse_map).with(Cacher, :joins, kind_of(Join), cacher.id)
+    end
   end
 
   describe "#update_resource_collections_cache!" do
@@ -53,10 +72,17 @@ describe CacheMachine::Cache::Collection do
     end
 
     context "on has many relation" do
-      after(:each) { hm }
-
       it "works" do
         CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).with(Cacher, [cacher.id], :has_many_cacheables)
+        hm
+      end
+
+      it "works on after_add callback" do
+        pending "<<, concat do not call after_add by some reason" do
+          CacheMachine::Cache::Map.should_receive(:reset_cache_on_map).with(Cacher, [cacher.id], :has_many_cacheables)
+          hmc = HasManyCacheable.create
+          cacher.has_many_cacheables << hmc
+        end
       end
     end
 

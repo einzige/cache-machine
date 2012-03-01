@@ -23,7 +23,7 @@ module CacheMachine
             CacheMachine::Cache::map_adapter.association_ids(instance, collection_name)
             association_class = resource.reflect_on_association(collection_name).klass
             association_class.find_each do |associated_instance|
-              CacheMachine::Cache::map_adapter.reverse_association_ids(associated_instance, resource, collection_name)
+              CacheMachine::Cache::map_adapter.reverse_association_ids(resource, collection_name, associated_instance)
             end
           end
         end

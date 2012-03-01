@@ -11,15 +11,27 @@ module CacheMachine
         cattr_accessor :cache_map_members
         self.cache_map_members = {}
 
+        # Updates cache map per collection update.
+        #
+        # @param resource_instance
+        # @param [ String, Symbol ] collection_name
+        def update_cache_map!(resource_instance, collection_name)
+          resource_id = resource_instance.send(resource_instance.class.primary_key)
+          collection_id = self.send(self.class.primary_key)
+          CacheMachine::Cache.map_adapter.append_id_to_map(resource_instance, collection_name, collection_id)
+          CacheMachine::Cache.map_adapter.append_id_to_reverse_map(resource_instance.class, collection_name, self, resource_id)
+        end
 
         # Updates cache of the related resources.
         #
         # @param [ Class ] cache_resource
         def update_resource_collections_cache!(cache_resource)
           self.class.cache_map_members[cache_resource].each do |collection_name, options|
-            ((options[:members].try(:keys) || []) << collection_name).each do |member|  # FIXME: use with options and formats
-              cache_map_ids = CacheMachine::Cache::map_adapter.reverse_association_ids(self, cache_resource, collection_name)
-              CacheMachine::Cache::Map.reset_cache_on_map(cache_resource, cache_map_ids, member)
+            cache_map_ids = CacheMachine::Cache::map_adapter.reverse_association_ids(cache_resource, collection_name, self)
+            unless cache_map_ids.empty?
+              ((options[:members].try(:keys) || []) << collection_name).each do |member|
+                CacheMachine::Cache::Map.reset_cache_on_map(cache_resource, cache_map_ids, member)
+              end
             end
           end
         end
@@ -76,6 +88,18 @@ module CacheMachine
 
           # Bind callbacks.
           [*options[:on]].each { |callback| self.send(callback, &reset_cache_proc) }
+
+          # When new element appears - update maps.
+          cache_resource.send(:add_association_callbacks, collection_name,
+                              :after_add => lambda { |resource_instance, collection_instance|
+                                collection_instance.update_cache_map!(resource_instance, collection_name)
+                              })
+
+          # Hook on '<<', 'concat' operations.
+          #cache_resource.send(:add_association_callbacks, collection_name,
+          #                    :after_add => lambda { |resource_instance, collection_instance|
+          #                      collection_instance.update_resource_collections_cache!(resource_instance.class)
+          #                    })
         end
 
         # Resets cache of associated resource instance.
