@@ -20,7 +20,6 @@ module CacheMachine
         def cache_key_of(member)
           CacheMachine::Cache::Map.resource_cache_key(self.class, self.send(self.class.primary_key), member)
         end
-        alias cache_key cache_key_of
 
         # Fetches cache of the member.
         #
