@@ -6,11 +6,14 @@ module CacheMachine
       cattr_accessor :registered_models
       self.registered_models = []
 
+      cattr_accessor :registered_maps
+      self.registered_maps = []
+
       # Draws cache dependency graph.
       #
       # @return [ nil ]
       def draw(&block)
-        Mapper.new.instance_eval(&block)
+        self.class.registered_maps << block
         nil
       end
 

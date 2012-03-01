@@ -17,7 +17,7 @@ describe CacheMachine::Cache::Map do
   describe "::fill_associations_map" do
     before :each do
       cacher and join1 and join2
-      CacheMachine::Cache::map_adapter(CacheMachine::Cache::map_adapter.get_map_key(cacher, :joins))
+      CacheMachine::Cache::map_adapter.delete(CacheMachine::Cache::map_adapter.get_map_key(cacher, :joins))
     end
 
     it "really breaks" do

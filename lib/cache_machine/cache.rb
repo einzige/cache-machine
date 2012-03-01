@@ -5,6 +5,23 @@ require "cache_machine/cache/map"
 module CacheMachine
   module Cache
 
+    # Enable cache by default.
+    @enabled = true
+
+    # Returns if cache is enabled.
+    #
+    # @return [ false, true ]
+    def self.enabled
+      @enabled
+    end
+
+    # Enables/disables cache.
+    #
+    # @param [ false, true ] is_enabled
+    def self.enabled= is_enabled
+      @enabled = is_enabled
+    end
+
     # Returns adapter used for storing maps of cache.
     #
     # @return [CacheMachine::Adapter]
