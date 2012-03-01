@@ -22,7 +22,7 @@ module CacheMachine
       attr_reader :cache_resource
       attr_reader :scope
 
-      def initialize &block
+      def initialize(&block)
         change_scope! nil, :root
         instance_eval(&block) if block_given?
       end
@@ -47,7 +47,11 @@ module CacheMachine
             end
           end
 
+          # Hook on associated collections.
           instance_eval(&block) if block_given?
+
+          # Register model as a cache-resource.
+          CacheMachine::Cache::Map.registered_models |= [@cache_resource]
         end
       end
 

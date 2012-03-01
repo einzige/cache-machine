@@ -3,8 +3,8 @@ module CacheMachine
     require 'cache_machine/cache/mapper'
 
     class Map
-      cattr_reader :registered_models
-      @@registered_models = []
+      cattr_accessor :registered_models
+      self.registered_models = []
 
       # Draws cache dependency graph.
       #

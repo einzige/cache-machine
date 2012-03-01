@@ -5,5 +5,9 @@ module CacheMachine
         include CacheMachine::Helpers::CacheHelper
       end
     end
+
+    rake_tasks do
+      load 'tasks.rb'
+    end
   end
 end

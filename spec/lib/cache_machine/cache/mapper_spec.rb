@@ -17,6 +17,10 @@ describe CacheMachine::Cache::Mapper do
     it "changes scope back" do
       subject.scope.should == :root
     end
+
+    it "registers model" do
+      CacheMachine::Cache::Map.registered_models.should == [Cacher]
+    end
   end
 
   describe "#collection" do
