@@ -11,33 +11,29 @@ module CacheMachine
         CacheMachine::Logger.info "CACHE_MACHINE: initialized Redis adapter"
       end
 
+      def append_id_to_map(target, association, id)
+        @redis.sadd(get_map_key(target, association), id)
+      end
+
+      def append_id_to_reverse_map(resource, association, target, id)
+        @redis.sadd(get_reverse_map_key(resource, association, target), id)
+      end
+
       def association_ids(target, association)
         get_ids(get_map_key(target, association)) { target.association_ids(association) }
       end
 
-      def reverse_association_ids(target, resource, association)
-        get_ids(get_reverse_map_key(target, resource)) { target.cache_map_ids(resource, association) }
+      def delete(key)
+        @redis.del(key).to_i > 0
+      end
+
+      def delete_content(key)
+        delete(get_content_key(key))
       end
 
       def fetch(key, options = {}, &block)
         key = get_content_key(key)
         block_given? ? exec_multi_command(:setnx, key, options, &block) : @redis.get(key)
-      end
-
-      def delete(key)
-        @redis.del(get_content_key(key)).to_i > 0
-      end
-
-      def append_id_to_map(target, association, id)
-        @redis.sadd(get_map_key(target, association), id)
-      end
-
-      def append_id_to_reverse_map(target, resource, id)
-        @redis.sadd(get_reverse_map_key(target, resource), id)
-      end
-
-      def write_timestamp(name, options = {}, &block)
-        exec_multi_command(:set, get_timestamp_key(name), options, &block)
       end
 
       def fetch_timestamp(name, options = {}, &block)
@@ -46,6 +42,14 @@ module CacheMachine
 
       def reset_timestamp(name)
         @redis.del(get_timestamp_key(name))
+      end
+
+      def reverse_association_ids(resource, association, target)
+        get_ids(get_reverse_map_key(resource, association, target)) { target.cache_map_ids(resource, association) }
+      end
+
+      def write_timestamp(name, options = {}, &block)
+        exec_multi_command(:set, get_timestamp_key(name), options, &block)
       end
 
       protected

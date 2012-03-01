@@ -42,7 +42,7 @@ module CacheMachine
         def reset_timestamp
           cache_key = timestamp_key
           CacheMachine::Logger.info "CACHE_MACHINE (reset_timestamp): deleting '#{cache_key}'."
-          CacheMachine::Cache::timestamps_adapter.delete(cache_key)
+          CacheMachine::Cache::timestamps_adapter.reset_timestamp(cache_key)
         end
       end
     end

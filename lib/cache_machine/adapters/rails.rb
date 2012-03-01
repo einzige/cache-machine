@@ -33,7 +33,11 @@ module CacheMachine
       end
 
       def delete(key)
-        ::Rails.cache.delete(get_content_key(key))
+        ::Rails.cache.delete(key)
+      end
+
+      def delete_content(key)
+        delete(get_content_key(key))
       end
 
       def reset_timestamp(name)

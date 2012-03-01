@@ -44,6 +44,13 @@ module CacheMachine
       raise 'not implemented yet'
     end
 
+    # Deletes content from cache.
+    #
+    # @param key
+    def delete_content(key)
+      raise 'not implemented yet'
+    end
+
     # Fetches cache.
     #
     # @param key

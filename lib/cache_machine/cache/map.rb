@@ -75,7 +75,7 @@ module CacheMachine
         [*ids].each do |id|
           key = resource_cache_key(resource, id, member)
           CacheMachine::Logger.info "Deleting cache by map: #{key}"
-          CacheMachine::Cache::storage_adapter.delete(key)
+          CacheMachine::Cache::storage_adapter.delete_content(key)
 
           key = timestamp_key(resource, id, member)
           CacheMachine::Logger.info "CACHE_MACHINE (reset_timestamp_of): deleting '#{key}'."
@@ -93,7 +93,7 @@ module CacheMachine
       def self.reset_resource_cache(resource, id, member)
         key = resource_cache_key(resource, id, member)
         CacheMachine::Logger.info "Deleting cache by map: #{key}"
-        CacheMachine::Cache::storage_adapter.delete(key)
+        CacheMachine::Cache::storage_adapter.delete_content(key)
       end
 
       # Returns cache key for cache resource.
