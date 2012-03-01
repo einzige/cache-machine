@@ -7,7 +7,7 @@ module CacheMachine
     end
 
     rake_tasks do
-      load 'tasks.rb'
+      load 'cache_machine/tasks.rb'
     end
   end
 end
