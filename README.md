@@ -39,6 +39,7 @@ cache_map :venues  => [:hotspots, :today_events],
 
 This example shows you how changes of one collection affect on invalidation process.
 For each record of your target model:
+
 - Cache for <b>users</b> collection associated with object of your target model is invalidated when changing (_add_, _remove_, _update_) the _users_ collection
 - Cache for <b>venues</b> collection associated with object of your target model is invalidated when changing the _venues_ collection associated with that object
 - Cache for <b>venues</b> collection associated with object of your target model is invalidated when changing the _cities_ collection. In this case machine automatically invalidates _hotspots_ and _today_events_
@@ -48,7 +49,9 @@ For each record of your target model:
 - Cache for <b>hotspots</b> collection is invalidated when changing the _cities_ collection
 - Cache for <b>today_events</b> collection is invalidated when changing the _venues_ collection
 - Cache for <b>today_events</b> collection is invalidated when changing the _cities_ collection
+
 <b>Cache map may contain any name, whatever you want. But invalidation process starts only when ActiveRecord collection is changed.</b>
+
 
 ## Custom cache invalidation
 
@@ -124,11 +127,13 @@ end
 
 ### Using class timestamps
 Suppose you need to fetch cached content of one of your collections.
+
 ```ruby
 Rails.cache.fetch(MyModel.timestamped_key) { '...' }
 ```
 
 Want to see collection timestamp?
+
 ```ruby
 MyModel.timestamp
 ```
@@ -151,17 +156,20 @@ MyModel.reset_timestamp
 ## Cache formats
 Cache Machine invalidates cache using a couple of keys with the different formats.
 Default formats are:
+
 - EHTML
 - HTML
 - JSON
 - XML
 
 This means you call 5 times for cache invalidation (1 time without specifying format) with different keys. Sometimes it is too much. Cache machine allows you to set your own formats. Just place in your environment config or in initializer the following:
+
 ```ruby
 CacheMachine::Cache.formats = [:doc, :pdf]
 ```
 
 Or if you do not want to use formats at all:
+
 ```ruby
 CacheMachine::Cache.formats = nil
 ```
@@ -177,6 +185,7 @@ Cache Machine will invalidate cache for each format you specified in config.
 
 ## Working with paginated content
 Suppose you installed WillPaginate gem and want to cache each page with fetched results separately.
+
 ```ruby
 class TweetsController < ApplicationController
 
@@ -188,16 +197,18 @@ class TweetsController < ApplicationController
 end
 ```
 
-Cache Machine will use <tt>:page</tt> as a part of cache key and will invalidate each page on any change in associated collection.
+Cache Machine will use `:page` as a part of cache key and will invalidate each page on any change in associated collection.
 
 ## ActionView helper
 From examples above:
+
 ```ruby
 <%= cache_for @lady_gaga, :updoming_events do %>
   <p>Don't hide yourself in regret
      Just love yourself and you're set</p>
 <% end %>
 ```
+
 The `cache_for` method automatically sets EHTML format on cache key.
 
 
