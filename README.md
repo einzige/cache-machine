@@ -17,21 +17,25 @@ Cache Machine depends only on the Rails.cache API and is thereby library agnosti
 
 # Usage
 
-  # Fetch cache of venues collection on model_instance.
-  @neighborhood.fetch_cache_of(:venues) { venues }
+```ruby
+# Fetch cache of venues collection on model_instance.
+@neighborhood.fetch_cache_of(:venues) { venues }
 
-  # Specify format.
-  @neighborhood.fetch_cache_of(:venues, :format => :json) { venues.to_json }
+# Specify format.
+@neighborhood.fetch_cache_of(:venues, :format => :json) { venues.to_json }
 
-  # Paginated content.
-  @neighborhood.fetch_cache_of(:venues, :page => 2) { venues.paginate(:page => 2) }
+# Paginated content.
+@neighborhood.fetch_cache_of(:venues, :page => 2) { venues.paginate(:page => 2) }
+```
 
 In you target model define <b>cache map</b>:
 
-  cache_map :venues  => [:hotspots, :today_events],
-            :cities  => [:venues],
-            :streets => :hotspots,
-            :users
+```ruby
+cache_map :venues  => [:hotspots, :today_events],
+          :cities  => [:venues],
+          :streets => :hotspots,
+          :users
+```
 
 This example shows you how changes of one collection affect on invalidation process.
 For each record of your target model:
@@ -51,82 +55,98 @@ For each record of your target model:
 ### Using timestamps
 Suppose you need to reset cache of _schedule_of_events_ every day.
 
-  @lady_gaga.fetch_cache_of :schedule_of_events, :timestamp => lambda { Date.today } do
-    @lady_gaga.events.where(:date.gt => Date.today)
-  end
+```ruby
+@lady_gaga.fetch_cache_of :schedule_of_events, :timestamp => lambda { Date.today } do
+  @lady_gaga.events.where(:date.gt => Date.today)
+end
+```
 
 ### Using Cache Machine timestamps
 Suppose you need to reset cache of _tweets_ every 10 minutes.
 
-  class LadyGagaPerformer < ActiveRecord::Base
-    define_timestamp :tweets_timestamp, :expires_in => 10.minutes
-  end
+```ruby
+class LadyGagaPerformer < ActiveRecord::Base
+  define_timestamp :tweets_timestamp, :expires_in => 10.minutes
+end
 
-  #...
+#...
 
-  # Somewhere
-  @lady_gaga.fetch_cache_of :tweets, :timestamp => :tweets_timestamp do
-    TwitterApi.fetch_tweets_for @lady_gaga
-  end
+# Somewhere
+@lady_gaga.fetch_cache_of :tweets, :timestamp => :tweets_timestamp do
+  TwitterApi.fetch_tweets_for @lady_gaga
+end
+```
 
 Suppose you need custom timestamp value.
 
-  class LadyGagaPerformer < ActiveRecord::Base
-    define_timestamp(:tweets_timestamp) { Time.now.to_i + self.id }
-  end
+```ruby
+class LadyGagaPerformer < ActiveRecord::Base
+  define_timestamp(:tweets_timestamp) { Time.now.to_i + self.id }
+end
 
-  #...
+#...
 
-  # Somewhere
-  @lady_gaga.fetch_cache_of :tweets, :timestamp => :tweets_timestamp do
-    TwitterApi.fetch_tweets_for @lady_gaga
-  end
+# Somewhere
+@lady_gaga.fetch_cache_of :tweets, :timestamp => :tweets_timestamp do
+  TwitterApi.fetch_tweets_for @lady_gaga
+end
+```
 
 Note what timestamp declarations work in object scope. Lets take an example:
 
-  class LadyGagaPerformer < ActiveRecord::Base
-    define_timestamp (:tweets_timestamp) { tweets.last.updated_at.to_i }
+```ruby
+class LadyGagaPerformer < ActiveRecord::Base
+  define_timestamp (:tweets_timestamp) { tweets.last.updated_at.to_i }
 
-    has_many :tweets
-  end
+  has_many :tweets
+end
 
-  class Tweet < ActiveRecord::Base
-    belongs_to :lady_gaga_performer
-  end
+class Tweet < ActiveRecord::Base
+  belongs_to :lady_gaga_performer
+end
+```
 
 ### Using methods as timestamps
 Suppose you have your own really custom cache key.
 
-  class LadyGagaPerformer < ActiveRecord::Base
-    def my_custom_cache_key
-      rand(100) + rand(1000) + rand(10000)
-    end
+```ruby
+class LadyGagaPerformer < ActiveRecord::Base
+  def my_custom_cache_key
+    rand(100) + rand(1000) + rand(10000)
   end
+end
 
-  #...
+#...
 
-  # Somewere
-  @lady_gaga.fetch_cache_of(:something, :timestamp => :my_custom_cache_key) { '...' }
+# Somewere
+@lady_gaga.fetch_cache_of(:something, :timestamp => :my_custom_cache_key) { '...' }
+```
 
 ### Using class timestamps
 Suppose you need to fetch cached content of one of your collections.
-  Rails.cache.fetch(MyModel.timestamped_key) { '...' }
+```ruby
+Rails.cache.fetch(MyModel.timestamped_key) { '...' }
+```
 
 Want to see collection timestamp?
-  MyModel.timestamp
+```ruby
+MyModel.timestamp
+```
 
 ### Manual cache invalidation
-  # For classes.
-  MyModel.reset_timestamp
+```ruby
+# For classes.
+MyModel.reset_timestamp
 
-  # For collections.
-  @lady_gaga.delete_cache_of :events
+# For collections.
+@lady_gaga.delete_cache_of :events
 
-  # For timestamps.
-  @lady_gaga.reset_timestamp_of :events
+# For timestamps.
+@lady_gaga.reset_timestamp_of :events
 
-  # You can reset all associated caches using map.
-  @lady_gaga.delete_all_caches
+# You can reset all associated caches using map.
+@lady_gaga.delete_all_caches
+```
 
 ## Cache formats
 Cache Machine invalidates cache using a couple of keys with the different formats.
@@ -137,38 +157,48 @@ Default formats are:
 - XML
 
 This means you call 5 times for cache invalidation (1 time without specifying format) with different keys. Sometimes it is too much. Cache machine allows you to set your own formats. Just place in your environment config or in initializer the following:
-  CacheMachine::Cache.formats = [:doc, :pdf]
+```ruby
+CacheMachine::Cache.formats = [:doc, :pdf]
+```
 
 Or if you do not want to use formats at all:
-  CacheMachine::Cache.formats = nil
+```ruby
+CacheMachine::Cache.formats = nil
+```
 
 Then use:
 
-  @lady_gaga.fetch_cache_of(:new_songs, :format => :doc) { "LaLaLa".to_doc }
-  @lady_gaga.fetch_cache_of(:new_songs, :format => :pdf) { "GaGaGa".to_pdf }
+```ruby
+@lady_gaga.fetch_cache_of(:new_songs, :format => :doc) { "LaLaLa".to_doc }
+@lady_gaga.fetch_cache_of(:new_songs, :format => :pdf) { "GaGaGa".to_pdf }
+```
 
 Cache Machine will invalidate cache for each format you specified in config.
 
 ## Working with paginated content
 Suppose you installed WillPaginate gem and want to cache each page with fetched results separately.
-  class TweetsController < ApplicationController
+```ruby
+class TweetsController < ApplicationController
 
-    def index
-      @tweets = @lady_gaga.fetch_cache_of(:tweets, :page => params[:page]) do
-        Tweet.all.paginate(:page => params[:page])
-      end
+  def index
+    @tweets = @lady_gaga.fetch_cache_of(:tweets, :page => params[:page]) do
+      Tweet.all.paginate(:page => params[:page])
     end
   end
+end
+```
 
 Cache Machine will use <tt>:page</tt> as a part of cache key and will invalidate each page on any change in associated collection.
 
 ## ActionView helper
 From examples above:
-  <%= cache_for @lady_gaga, :updoming_events do %>
-    <p>Don't hide yourself in regret
-       Just love yourself and you're set</p>
-  <% end %>
-<tt>cache_for</tt> method automatically sets EHTML format on cache key.
+```ruby
+<%= cache_for @lady_gaga, :updoming_events do %>
+  <p>Don't hide yourself in regret
+     Just love yourself and you're set</p>
+<% end %>
+```
+The `cache_for` method automatically sets EHTML format on cache key.
 
 
 ## Contributing to cache-machine
