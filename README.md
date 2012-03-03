@@ -1,4 +1,4 @@
-# cache-machine !(http://img195.imageshack.us/img195/5371/cachemachinefinal2.png)
+# cache-machine ![cache-machine](http://img195.imageshack.us/img195/5371/cachemachinefinal2.png)
 
 An ActiveRecord mixin that helps managing cached content in a Ruby on Rails application with complex data update dependencies.
 
