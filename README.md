@@ -1,4 +1,4 @@
-= cache-machine
+# cache-machine
 http://img195.imageshack.us/img195/5371/cachemachinefinal2.png
 
 An ActiveRecord mixin that helps managing cached content in a Ruby on Rails application with complex data update dependencies.
@@ -15,7 +15,7 @@ You will find Cache Machine useful if you:
 
 Cache Machine depends only on the Rails.cache API and is thereby library agnostic.
 
-= Usage
+# Usage
 
   # Fetch cache of venues collection on model_instance.
   @neighborhood.fetch_cache_of(:venues) { venues }
@@ -46,16 +46,16 @@ For each record of your target model:
 - Cache for <b>today_events</b> collection is invalidated when changing the _cities_ collection
 <b>Cache map may contain any name, whatever you want. But invalidation process starts only when ActiveRecord collection is changed.</b>
 
-== Custom cache invalidation
+## Custom cache invalidation
 
-=== Using timestamps
+### Using timestamps
 Suppose you need to reset cache of _schedule_of_events_ every day.
 
   @lady_gaga.fetch_cache_of :schedule_of_events, :timestamp => lambda { Date.today } do
     @lady_gaga.events.where(:date.gt => Date.today)
   end
 
-=== Using Cache Machine timestamps
+### Using Cache Machine timestamps
 Suppose you need to reset cache of _tweets_ every 10 minutes.
 
   class LadyGagaPerformer < ActiveRecord::Base
@@ -94,7 +94,7 @@ Note what timestamp declarations work in object scope. Lets take an example:
     belongs_to :lady_gaga_performer
   end
 
-=== Using methods as timestamps
+### Using methods as timestamps
 Suppose you have your own really custom cache key.
 
   class LadyGagaPerformer < ActiveRecord::Base
@@ -108,14 +108,14 @@ Suppose you have your own really custom cache key.
   # Somewere
   @lady_gaga.fetch_cache_of(:something, :timestamp => :my_custom_cache_key) { '...' }
 
-=== Using class timestamps
+### Using class timestamps
 Suppose you need to fetch cached content of one of your collections.
   Rails.cache.fetch(MyModel.timestamped_key) { '...' }
 
 Want to see collection timestamp?
   MyModel.timestamp
 
-=== Manual cache invalidation
+### Manual cache invalidation
   # For classes.
   MyModel.reset_timestamp
 
@@ -128,7 +128,7 @@ Want to see collection timestamp?
   # You can reset all associated caches using map.
   @lady_gaga.delete_all_caches
 
-== Cache formats
+## Cache formats
 Cache Machine invalidates cache using a couple of keys with the different formats.
 Default formats are:
 - EHTML
@@ -149,7 +149,7 @@ Then use:
 
 Cache Machine will invalidate cache for each format you specified in config.
 
-== Working with paginated content
+## Working with paginated content
 Suppose you installed WillPaginate gem and want to cache each page with fetched results separately.
   class TweetsController < ApplicationController
 
@@ -162,7 +162,7 @@ Suppose you installed WillPaginate gem and want to cache each page with fetched 
 
 Cache Machine will use <tt>:page</tt> as a part of cache key and will invalidate each page on any change in associated collection.
 
-== ActionView helper
+## ActionView helper
 From examples above:
   <%= cache_for @lady_gaga, :updoming_events do %>
     <p>Don't hide yourself in regret
@@ -171,7 +171,7 @@ From examples above:
 <tt>cache_for</tt> method automatically sets EHTML format on cache key.
 
 
-== Contributing to cache-machine
+## Contributing to cache-machine
 
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
@@ -181,6 +181,6 @@ From examples above:
 * Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
 * Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
 
-== Copyright
+## Copyright
 
 Copyright (c) 2011 PartyEarth LLC. See LICENSE.txt for details.
