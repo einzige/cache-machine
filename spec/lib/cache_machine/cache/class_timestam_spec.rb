@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe CacheMachine::Cache::Timestamp do
+describe CacheMachine::Cache::ClassTimestamp do
   before :each do
     CacheMachine::Cache::Mapper.new do
       resource Cacher

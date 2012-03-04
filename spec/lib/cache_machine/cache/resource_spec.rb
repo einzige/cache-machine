@@ -22,16 +22,6 @@ describe CacheMachine::Cache::Resource do
     end
   end
 
-  describe "::define_timestamp" do
-    before :each do
-      Cacher.define_timestamp :test_timestamp
-    end
-
-    it "works" do
-      cacher.should respond_to :test_timestamp
-    end
-  end
-
   describe "#fetch_cache_of" do
     it "works" do
       cacher.fetch_cache_of(:has_many_cacheables) { 'cached' }.should == 'cached'

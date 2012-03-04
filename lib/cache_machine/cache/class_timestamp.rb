@@ -1,6 +1,6 @@
 module CacheMachine
   module Cache
-    module Timestamp
+    module ClassTimestamp
       extend ActiveSupport::Concern
 
       included do

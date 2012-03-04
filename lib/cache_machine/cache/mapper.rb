@@ -2,13 +2,13 @@ module CacheMachine
   module Cache
     require 'cache_machine/cache/collection'
     require 'cache_machine/cache/resource'
-    require 'cache_machine/cache/timestamp'
+    require 'cache_machine/cache/class_timestamp'
 
     # CacheMachine::Cache::Map.draw do
     #   resource Venue, :timestamp => false do                          # Says what Venue class should be used as a source of ids for map
-    #     collection :events, :scope => :active, :on => :after_save do  # Says what every event should fill the map with venue ids and use callback to reset cache for every venue.
+    #     collection :events, :scopes => :active, :on => :after_save do  # Says what every event should fill the map with venue ids and use callback to reset cache for every venue.
     #       member :upcoming_events                                     # Says what this method also needs to be reset.
-    #       member :similar_events
+    #       member :similar_events, :festivals
     #     end
     #   end
     #
@@ -42,8 +42,8 @@ module CacheMachine
           options.reverse_merge! DEFAULT_RESOURCE_OPTIONS
 
           if options[:timestamp]
-            unless @cache_resource.include? CacheMachine::Cache::Timestamp
-              @cache_resource.send(:include, CacheMachine::Cache::Timestamp)
+            unless @cache_resource.include? CacheMachine::Cache::ClassTimestamp
+              @cache_resource.send(:include, CacheMachine::Cache::ClassTimestamp)
             end
           end
 
@@ -75,7 +75,7 @@ module CacheMachine
               collection_klass.send :include, CacheMachine::Cache::Collection
             end
 
-            collection_klass.register_cache_dependency @cache_resource, collection_name, { :scope   => options[:scope],
+            collection_klass.register_cache_dependency @cache_resource, collection_name, { :scopes  => options[:scopes],
                                                                                            :members => collection_members,
                                                                                            :on      => options[:on] }
             @cache_resource.cached_collections |= [collection_name]

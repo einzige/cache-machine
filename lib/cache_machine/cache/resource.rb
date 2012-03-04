@@ -91,39 +91,6 @@ module CacheMachine
         end
         alias delete_member_cache delete_cache_of_only
 
-        # Returns timestamp cache key for anything.
-        #
-        # @param [ String, Symbol ] anything
-        #
-        # @return [ String ]
-        def timestamp_key_of(anything)
-          CacheMachine::Cache::Map.timestamp_key(self.class, self.send(self.class.primary_key), anything)
-        end
-        alias timestamp_key timestamp_key_of
-
-        # Returns timestamp of anything from memcached.
-        #
-        # @param [ String, Symbol ] anything
-        #
-        # @return [ String ]
-        def timestamp_of(anything)
-          key = timestamp_key_of anything
-          CacheMachine::Logger.info "CACHE_MACHINE (timestamp_of): reading timestamp '#{key}'."
-          CacheMachine::Cache::timestamps_adapter.fetch_timestamp(key) { Time.now.to_i.to_s }
-        end
-        alias timestamp timestamp_of
-
-        # Returns cache key of +anything+ with timestamp attached.
-        #
-        # @return [ String ]
-        def timestamped_key_of(anything)
-          CacheMachine::Cache::Map.timestamped_resource_member_key(self.class,
-                                                                   self.send(self.class.primary_key),
-                                                                   anything,
-                                                                   timestamp_of(anything))
-        end
-        alias timestamped_key timestamped_key_of
-
         # Deletes cache of anything from memory.
         #
         # @param [ String, Symbol ] anything
@@ -131,31 +98,6 @@ module CacheMachine
           self.reset_resource_timestamp(self.class, self.send(self.class.primary_key), anything)
         end
         alias reset_timestamp reset_timestamp_of
-      end
-
-      module ClassMethods
-
-        # Defines timestamp for object.
-        #
-        # @example Define timestamp to be updated every hour.
-        #   class MyModel < ActiveRecord::Base
-        #     include CacheMachine::Cache
-        #     define_timestamp(:my_timestamp, :expires_in => 1.hour) { my_optional_value }
-        #   end
-        #
-        # @param [ String, Symbol ] timestamp_name
-        # @param [ Hash ] options
-        def define_timestamp(timestamp_name, options = {}, &block)
-          options[:timestamp] = block if block_given?
-
-          define_method timestamp_name do
-            fetch_cache_of(timestamp_key_of(timestamp_name), options) do
-              CacheMachine::Logger.info "CACHE_MACHINE (define_timestamp): deleting old timestamp '#{timestamp_name}'."
-              delete_cache_of timestamp_name # Case when cache expired by time.
-              Time.now.to_i.to_s
-            end
-          end
-        end
       end
     end
   end
