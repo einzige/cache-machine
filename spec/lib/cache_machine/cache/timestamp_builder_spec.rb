@@ -8,6 +8,7 @@ describe CacheMachine::Cache::TimestampBuilder do
     end
 
     it "works" do
+      Cacher.should respond_to :resource_test_timestamp
       Cacher.should respond_to :test_timestamp
       Object.should_not respond_to :test_timestamp
     end

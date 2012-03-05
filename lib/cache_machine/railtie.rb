@@ -7,6 +7,7 @@ module CacheMachine
     end
 
     config.after_initialize do
+
       CacheMachine::Cache::Map.registered_maps.each do |block|
         CacheMachine::Cache::Mapper.new.instance_eval(&block)
       end
