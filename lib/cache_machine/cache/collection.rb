@@ -77,6 +77,9 @@ module CacheMachine
 
           options.reverse_merge!(CacheMachine::Cache::Collection::DEFAULT_DEPENDENCY_OPTIONS)
 
+          # Register scopes.
+          self.cache_scopes = options[:scopes]
+
           # Save dependency options.
           (self.cache_map_members[cache_resource] ||= {}).tap do |resource_collection|
             resource_collection[collection_name] = options
