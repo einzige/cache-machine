@@ -218,7 +218,30 @@ Redis adapter is available in cache-machine-redis gem, please check out [here](h
 ## Rake tasks
 Cache machine will produce SQL queries on each update in collection until all map of associations will stored in cache.
 You can "prefill" cache map running:
+
 ```rake cache_machine:fill_associations_map```
+
+Rake accepts model names as params. Each of these models must be defined as resource in cache map:
+
+```ruby
+CacheMachine::Cache::Map.new.draw do
+  resource House
+  resource Wall
+end
+```
+
+```rake cache_machine:fill_associations_map[House, Wall]```
+
+If all objects from database is too much for you, add additional scope to resource or collection:
+
+```ruby
+CacheMachine::Cache::Map.new.draw do
+  resource House, :scope => :offices do
+    collection :bricks, :scope => :squared
+  end
+  resource Wall
+end
+```
 
 ## Contributing to cache-machine
 
