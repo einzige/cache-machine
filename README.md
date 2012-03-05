@@ -3,11 +3,13 @@
 An ActiveRecord mixin that helps managing cached content in a Ruby on Rails application with complex data update dependencies.
 
 Cache Machine provides
+
 - high-level methods for accessing cached content using page names, numbers, time stamps etc,
 - a DSL to describe update dependencies between the data models underlying the cached content,
 - automatic cache invalidation based on those explicitly modeled data update dependencies.
 
 You will find Cache Machine useful if you:
+
 - use Memcache to cache fragments of a web site that contain data from a variety of underlying data models
 - anytime one of the underlying data models changes, all the cached page fragments in which this data model occurs - and only those - need to be invalidated/updated
 - you have many data models, cached fragments, and many data models used inside each cached fragment
