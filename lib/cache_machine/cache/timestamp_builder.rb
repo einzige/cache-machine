@@ -3,10 +3,6 @@ module CacheMachine
     module TimestampBuilder
       extend ActiveSupport::Concern
 
-      included do
-        cattr_accessor :registering_timestamp
-      end
-
       module ClassMethods
 
         # Defines timestamp for object.
@@ -19,36 +15,30 @@ module CacheMachine
         # @param [ String, Symbol ] timestamp_name
         # @param [ Hash ] options
         def define_timestamp(timestamp_name, options = {}, &block)
-          @@registering_timestamp = [timestamp_name, options, block]
-          class << self
-            timestamp_name, options, block = *@@registering_timestamp
+          (class << self; self end).send(:define_method, timestamp_name) do
 
-            define_method timestamp_name do
+            # Block affecting on timestamp.
+            stamp_value = block_given? ? ([*instance_eval(&block)] << 'stamp').join('_') : 'stamp'
 
-              # Block affecting on timestamp.
-              stamp_value = block ? ([*instance_eval(&block)] << 'stamp').join('_') : 'stamp'
+            # The key of timestamp itself.
+            stamp_key_value = timestamp_key_of("#{timestamp_name}_#{stamp_value}")
 
-              # The key of timestamp itself.
-              stamp_key_value = timestamp_key_of([timestamp_name, stamp_value].join('_'))
+            # The key of the key of timestamp.
+            stamp_key = timestamp_key_of(timestamp_name)
 
-              # The key of the key of timestamp.
-              stamp_key = timestamp_key_of(timestamp_name)
+            # The key of timestamp from the cache (previous value).
+            cached_stamp_key_value = CacheMachine::Cache::timestamps_adapter.fetch_timestamp(stamp_key) { stamp_key_value }
 
-              # The key of timestamp from the cache (previous value).
-              cached_stamp_key_value = CacheMachine::Cache::timestamps_adapter.fetch_timestamp(stamp_key) { stamp_key_value }
+            # Timestamp is updated. Delete old key from cache to do not pollute it with dead-keys.
+            if stamp_key_value != cached_stamp_key_value
+              CacheMachine::Cache::timestamps_adapter.reset_timestamp(stamp_key)
+              CacheMachine::Cache::timestamps_adapter.reset_timestamp(cached_stamp_key_value)
+            end
 
-              # Timestamp is updated. Delete old key from cache to do not pollute it with dead-keys.
-              if stamp_key_value != cached_stamp_key_value
-                CacheMachine::Cache::timestamps_adapter.reset_timestamp(stamp_key)
-                CacheMachine::Cache::timestamps_adapter.reset_timestamp(cached_stamp_key_value)
-              end
-
-              CacheMachine::Cache::timestamps_adapter.fetch_timestamp(stamp_key_value, options) do
-                Time.now.to_i.to_s
-              end
+            CacheMachine::Cache::timestamps_adapter.fetch_timestamp(stamp_key_value, options) do
+              Time.now.to_i.to_s
             end
           end
-          @@registering_timestamp = nil
         end
 
         # Returns timestamp cache key for anything.
