@@ -18,6 +18,7 @@ Cache Machine is library agnostic. You can use your own cache adapters (see belo
 # Usage
 
 Setup your cache dependencies in config/initializers/cache-machine.rb using <b>cache map</b>. Very similar to Rails routes:
+
 ```ruby
 CacheMachine::Cache::Map.new.draw do
   resource City do
@@ -47,6 +48,7 @@ end
 ```
 
 In this case your models should look like this:
+
 ```ruby
 class City < ActiveRecord::Base
   has_many :streets
@@ -94,6 +96,7 @@ This example shows you how changes in your database affect on cache:
 Timestamps allow you to build very complex and custom cache dependencies.
 
 In your model:
+
 ```ruby
 class House < ActiveRecord::Base
   define_timestamp(:walls_timestamp) { [ bricks.count, windows.last.updated_at ] }
@@ -101,6 +104,7 @@ end
 ```
 
 Anywhere else:
+
 ```ruby
 @house.fetch_cache_of :walls, :timestamp => :walls_timestamp do
   walls.where(:built_at => Date.today)
@@ -130,6 +134,7 @@ end
 ```
 
 ```fetch_cache_of``` block uses same options as Rails.cache.fetch. You can easily add _expires_in_ option in it directly.
+
 ```ruby
 @house.fetch_cache :bricks, :expires_in => 1.minute do
  ...
@@ -137,11 +142,13 @@ end
 ```
 
 Cache Machine stores timestamps for each of your model declared as resource in cache map.
+
 ```ruby
 House.timestamp
 ```
 Each time your houses collection is changed timestamp will change its value.
 You can disable this callback in your cache map:
+
 ```ruby
 CacheMachine::Cache::Map.new.draw do
   resource House, :timestamp => false
@@ -149,6 +156,7 @@ end
 ```
 
 ### Manual cache invalidation
+
 ```ruby
 # For classes.
 House.reset_timestamp
@@ -165,10 +173,12 @@ House.reset_timestamp
 
 ## Associations cache
 You can fetch ids of an association from cache.
+
 ```ruby
 @house.association_ids(:bricks) # will return array of ids
 ```
 You can fetch associated objects from cache.
+
 ```ruby
 @house.associated_from_cache(:bricks) # will return scope of relation with condition to ids from cache map.
 ```
@@ -194,6 +204,7 @@ _Timestamps adapter_ contains timestamps.
 _Storage adapter_ contains cached content itself (usually strings, html, etc).
 
 You can setup custom adapters in your environment:
+
 ```ruby
 url = "redis://user:pass@host.com:9383/"
 uri = URI.parse(url)
