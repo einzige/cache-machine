@@ -1,7 +1,7 @@
 source "http://rubygems.org"
 
 gem "rails"
-gem "activemodel"
+gem "redis"
 
 group :development do
   gem "bundler", "~> 1.0.0"

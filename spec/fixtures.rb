@@ -50,6 +50,8 @@ end
 class Join < ActiveRecord::Base
   set_table_name HMT_JOINS_TABLE_NAME
 
+  scope :test_scope, joins(:cacher).where(:cachers => { :name => %w{one two} })
+
   belongs_to :cacher, :class_name => 'Cacher'
   belongs_to :has_many_through_cacheable, :class_name => 'HasManyThroughCacheable'
 end
@@ -65,15 +67,10 @@ class Polymorphic < ActiveRecord::Base
 end
 
 class Cacher < ActiveRecord::Base
+  cattr_accessor :stamp
   set_table_name TARGET_TABLE_NAME
 
-  cache_map :polymorphics,
-            :child_cachers,
-            :has_many_cacheables => :dependent_cache,
-            :has_many_through_cacheables => :dependent_cache,
-            :has_and_belongs_to_many_cacheables => :dependent_cache
-
-  define_timestamp(:dynamic_timestamp) { execute_timestamp }
+  scope :test_scope, where(:name => %w{one two})
 
   has_and_belongs_to_many :has_and_belongs_to_many_cacheables, :class_name => 'HasAndBelongsToManyCacheable'
   has_many :has_many_cacheables, :class_name => 'HasManyCacheable'
