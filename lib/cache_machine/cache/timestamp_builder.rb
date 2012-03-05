@@ -19,8 +19,7 @@ module CacheMachine
           (class << self; self end).send(:define_method, timestamp_name) do
 
             # Block affecting on timestamp.
-            stamp_value = block_given? ? ([*block.call(self)] << 'stamp').join('_') : 'stamp'
-            puts stamp_value
+            stamp_value = block_given? ? ([*instance_eval(&block)] << 'stamp').join('_') : 'stamp'
 
             # The key of timestamp itself.
             stamp_key_value = timestamp_key_of("#{timestamp_name}_#{stamp_value}")
@@ -33,6 +32,7 @@ module CacheMachine
 
             # Timestamp is updated. Delete old key from cache to do not pollute it with dead-keys.
             if stamp_key_value != cached_stamp_key_value
+              CacheMachine::Cache::timestamps_adapter.reset_timestamp(stamp_key)
               CacheMachine::Cache::timestamps_adapter.reset_timestamp(cached_stamp_key_value)
             end
 

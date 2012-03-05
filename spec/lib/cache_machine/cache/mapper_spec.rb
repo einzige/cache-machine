@@ -25,9 +25,9 @@ describe CacheMachine::Cache::Mapper do
 
   describe "#collection" do
     let(:register_options) do
-      { :scope   => nil,
+      { :scopes  => :scoped,
         :on      => :after_save,
-        :members => { :one => {}, :two => {} }
+        :members => [:one, :two]
       }
     end
 

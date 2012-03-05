@@ -12,8 +12,7 @@ describe CacheMachine::Cache::Collection do
     CacheMachine::Cache::Mapper.new do
       resource Cacher do
         collection :joins do
-          member :one
-          member :two
+          members :one, :two
         end
         collection :has_many_through_cacheables
         collection :has_many_cacheables
@@ -24,14 +23,14 @@ describe CacheMachine::Cache::Collection do
 
   describe "#register_cache_dependency" do
     let(:register_options) do
-      { :scope   => nil,
+      { :scopes  => :scoped,
         :on      => :after_save,
-        :members => { :one => {}, :two => {} }
+        :members => [:one, :two]
       }
     end
 
     it "registers cache memebers" do
-      Join.cache_map_members.should == { Cacher => { :joins => register_options} }
+      Join.cache_map_members.should == { Cacher => { :joins => register_options } }
     end
 
     it "appends callbacks" do

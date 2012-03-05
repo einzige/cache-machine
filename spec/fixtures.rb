@@ -65,6 +65,7 @@ class Polymorphic < ActiveRecord::Base
 end
 
 class Cacher < ActiveRecord::Base
+  cattr_accessor :stamp
   set_table_name TARGET_TABLE_NAME
 
   has_and_belongs_to_many :has_and_belongs_to_many_cacheables, :class_name => 'HasAndBelongsToManyCacheable'

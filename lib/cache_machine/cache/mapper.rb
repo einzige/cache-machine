@@ -16,8 +16,8 @@ module CacheMachine
     # end
 
     class Mapper
-      DEFAULT_RESOURCE_OPTIONS   = { :timestamp => true        }
-      DEFAULT_COLLECTION_OPTIONS = { :on        => :after_save }
+      DEFAULT_RESOURCE_OPTIONS   = { :timestamp => true,        :scopes => :scoped }
+      DEFAULT_COLLECTION_OPTIONS = { :on        => :after_save, :scopes => :scoped }
 
       attr_reader :cache_resource
       attr_reader :scope
@@ -84,19 +84,19 @@ module CacheMachine
 
         # Appends member to the collection.
         #
-        # @param [String] member_name
-        # @param [Hash] options
-        def member(member_name, options = {})
+        # @param [Array<String, Symbol>] member_names
+        def member(*member_names)
           scoped :collection, :member do
-            (@members ||= {})[member_name] = options
+            @members = (@members || []) | member_names
           end
         end
+        alias members member
 
         # Returns members of collection in scope.
         #
         # @return [Hash]
         def get_members(&block)
-          @members = {}
+          @members = []
           instance_eval(&block) if block_given?
           @members
         end
