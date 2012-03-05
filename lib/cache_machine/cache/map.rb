@@ -21,11 +21,14 @@ module CacheMachine
       #
       # @param [ Class ] resource
       def self.fill_associations_map(resource)
-        resource.find_each do |instance|
+        resource.under_cache_scopes.
+                 select("#{resource.table_name}.#{resource.primary_key}").find_each do |instance|
           resource.cached_collections.each do |collection_name|
             CacheMachine::Cache::map_adapter.association_ids(instance, collection_name)
             association_class = resource.reflect_on_association(collection_name).klass
-            association_class.find_each do |associated_instance|
+            association_class.under_cache_scopes.
+                              select("#{association_class.table_name}.#{association_class.primary_key}").
+                              find_each do |associated_instance|
               CacheMachine::Cache::map_adapter.reverse_association_ids(resource, collection_name, associated_instance)
             end
           end

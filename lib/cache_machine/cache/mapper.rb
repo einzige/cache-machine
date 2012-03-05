@@ -8,7 +8,7 @@ module CacheMachine
     #   resource Venue, :timestamp => false do                          # Says what Venue class should be used as a source of ids for map
     #     collection :events, :scopes => :active, :on => :after_save do  # Says what every event should fill the map with venue ids and use callback to reset cache for every venue.
     #       member :upcoming_events                                     # Says what this method also needs to be reset.
-    #       member :similar_events, :festivals
+    #       members :similar_events, :festivals
     #     end
     #   end
     #
@@ -41,6 +41,10 @@ module CacheMachine
 
           options.reverse_merge! DEFAULT_RESOURCE_OPTIONS
 
+          # Scopes are used for filtering records what we do not want to store in cache-map.
+          @cache_resource.cache_scopes << options[:scopes]
+
+          # Timestamp is used for tracking changes in whole collection (outside any scope).
           if options[:timestamp]
             unless @cache_resource.include? CacheMachine::Cache::ClassTimestamp
               @cache_resource.send(:include, CacheMachine::Cache::ClassTimestamp)

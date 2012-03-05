@@ -7,10 +7,10 @@ module CacheMachine
         CacheMachine::Logger.info "CACHE_MACHINE: bind cache-map on class #{self.name}"
 
         include CacheMachine::Cache::Associations
+        include CacheMachine::Cache::Scope
 
         cattr_accessor :cached_collections
         self.cached_collections = []
-
 
         # Returns cache key of the member.
         #

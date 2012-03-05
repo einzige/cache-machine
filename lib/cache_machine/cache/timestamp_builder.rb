@@ -9,7 +9,6 @@ module CacheMachine
         #
         # @example Define timestamp to be updated every hour.
         #   class MyModel < ActiveRecord::Base
-        #     include CacheMachine::Cache
         #     define_timestamp(:my_timestamp, :expires_in => 1.hour) { my_optional_value }
         #   end
         #

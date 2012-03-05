@@ -7,6 +7,7 @@ module CacheMachine
 
       included do
         include CacheMachine::Cache::Associations
+        include CacheMachine::Cache::Scope
 
         cattr_accessor :cache_map_members
         self.cache_map_members = {}
@@ -58,7 +59,7 @@ module CacheMachine
           resource_table_name = cache_resource.table_name
           resource_pk         = cache_resource.primary_key.to_sym
 
-          cache_resource.joins(collection_name).
+          cache_resource.under_cache_scopes.joins(collection_name).
               where(collection_name => { pk => self.send(pk) }).
               select("#{resource_table_name}.#{resource_pk}").to_a.map &resource_pk
         end

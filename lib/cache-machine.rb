@@ -2,6 +2,7 @@
 # Copyright (c) 2011 {PartyEarth LLC}[http://partyearth.com]
 # mailto:kgoslar@partyearth.com
 #++
+require "cache_machine/cache/scope"
 require "cache_machine/cache/timestamp_builder"
 require "cache_machine/cache/associations"
 require "cache_machine/cache/mapper"
