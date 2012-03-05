@@ -5,7 +5,7 @@
 .idea
 
 # test database
-db
+db/*.db
 
 # rcov generated
 coverage
@@ -22,3 +22,5 @@ doc
 
 # jeweler generated
 pkg
+
+.rspec

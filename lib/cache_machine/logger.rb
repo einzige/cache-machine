@@ -8,7 +8,10 @@ module CacheMachine
                        :none   => 10 } # No output at all.
 
     # The default log level.
-    @@level = LOGGING_LEVELS[:none]
+    cattr_accessor :level
+    cattr_accessor :logger
+
+    self.level = LOGGING_LEVELS[:none]
 
     class << self
       LOGGING_LEVELS.keys.each do |level|
@@ -21,20 +24,18 @@ module CacheMachine
       #   ActiveRecord::CacheMachine::Logger.level = :info
       #
       # @param [Symbol] value
-      def level= value
+      def level=(value)
         @@level = LOGGING_LEVELS[value] or raise "CACHE_MACHINE: Unknown log level: '#{value}'."
-        if @@level <= LOGGING_LEVELS[:info]
-          puts "CACHE_MACHINE: Setting log level to '#{value}'.\n"
-        end
+        puts "CACHE_MACHINE: Setting log level to '#{value}'."
       end
 
       # Logs the given entry with the given log level.
       #
       # @param [ Symbol ] level
       # @param [ String ] text
-      def write level, text
-        if @@level <= (LOGGING_LEVELS[level] or raise "CACHE_MACHINE: Unknown log level: '#{level}'.")
-          puts text
+      def write(level, text)
+        if self.level <= LOGGING_LEVELS[level]
+          self.logger ? self.logger.info(text) : puts(text)
         end
       end
     end
