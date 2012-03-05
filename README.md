@@ -3,15 +3,15 @@
 An ActiveRecord mixin that helps managing cached content in a Ruby on Rails application with complex data update dependencies.
 
 Cache Machine provides
-* high-level methods for accessing cached content using page names, numbers, time stamps etc,
-* a DSL to describe update dependencies between the data models underlying the cached content,
-* automatic cache invalidation based on those explicitly modeled data update dependencies.
+- high-level methods for accessing cached content using page names, numbers, time stamps etc,
+- a DSL to describe update dependencies between the data models underlying the cached content,
+- automatic cache invalidation based on those explicitly modeled data update dependencies.
 
 You will find Cache Machine useful if you:
-* use Memcache to cache fragments of a web site that contain data from a variety of underlying data models
-* anytime one of the underlying data models changes, all the cached page fragments in which this data model occurs - and only those - need to be invalidated/updated
-* you have many data models, cached fragments, and many data models used inside each cached fragment
-* you want to update cache from background job (i.e. cache-sweeper does not know about your changes)
+- use Memcache to cache fragments of a web site that contain data from a variety of underlying data models
+- anytime one of the underlying data models changes, all the cached page fragments in which this data model occurs - and only those - need to be invalidated/updated
+- you have many data models, cached fragments, and many data models used inside each cached fragment
+- you want to update cache from background job (i.e. cache-sweeper does not know about your changes)
 
 Cache Machine is library agnostic. You can use your own cache adapters (see below).
 
@@ -187,7 +187,7 @@ You can fetch associated objects from cache.
 From examples above:
 
 ```erb
-<%= cache_for @lady_gaga, :upcoming_events do %>
+<%= cache_for @lady_gaga, :upcoming_events, :timestamp => :each_hour do %>
   <p>Don't hide yourself in regret
      Just love yourself and you're set</p>
 <% end %>
@@ -211,7 +211,7 @@ CacheMachine::Cache.map_adapter = CacheMachine::Adapters::Rails.new
 ```
 Default adapter uses standard ```Rails.cache``` API.
 
-Redis adapter is available in cache-machine-redis gem, please check out [here](http://github.com/zininserge/cache-machine-redis)
+Redis adapter is available in cache-machine-redis gem, please check out [here](http://github.com/zininserge/cache-machine-redis).
 
 ## Contributing to cache-machine
 
