@@ -32,16 +32,18 @@ describe CacheMachine::Cache::Resource do
 
     context "with timestamps" do
       it "works" do
-        cacher.fetch_cache_of(:has_many_cacheables, :timestamp => lambda { 'test-1' }) { 'cached' }.should == 'cached'
-        cacher.fetch_cache_of(:has_many_cacheables, :timestamp => lambda { 'test-1' }) { 'non-cached' }.should == 'cached'
-        cacher.fetch_cache_of(:has_many_cacheables, :timestamp => lambda { 'test-2' }) { 'cached-2' }.should == 'cached-2'
+        cacher.fetch_cache_of(:has_many_cacheables, :timestamp => :resource_test_timestamp)  { 'cached' }.should == 'cached'
+        Time.stub(:now).and_return(1)
+        cacher.fetch_cache_of(:has_many_cacheables, :timestamp => :resource_test_timestamp)  { 'non-cached' }.should == 'cached'
+        Time.stub(:now).and_return(2)
+        cacher.fetch_cache_of(:has_many_cacheables, :timestamp => :resource_test_timestamp2) { 'cached-2' }.should == 'cached-2'
       end
 
       it "updates when collection changed" do
-        cacher.fetch_cache_of(:has_many_cacheables, :timestamp => lambda { 'test' }) { 'cached' }.should == 'cached'
+        cacher.fetch_cache_of(:has_many_cacheables, :timestamp => :resource_test_timestamp) { 'cached' }.should == 'cached'
         hm
         Time.stub("now").and_return('another time comes')
-        cacher.fetch_cache_of(:has_many_cacheables, :timestamp => lambda { 'test' }) { 'updated' }.should == 'updated'
+        cacher.fetch_cache_of(:has_many_cacheables, :timestamp => :resource_test_timestamp) { 'updated' }.should == 'updated'
       end
     end
   end

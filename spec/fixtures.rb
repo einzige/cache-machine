@@ -70,6 +70,14 @@ class Cacher < ActiveRecord::Base
   cattr_accessor :stamp
   set_table_name TARGET_TABLE_NAME
 
+  define_timestamp :resource_test_timestamp do
+    self.stamp
+  end
+
+  define_timestamp :resource_test_timestamp2 do
+    [self.stamp, 2]
+  end
+
   scope :test_scope, where(:name => %w{one two})
 
   has_and_belongs_to_many :has_and_belongs_to_many_cacheables, :class_name => 'HasAndBelongsToManyCacheable'

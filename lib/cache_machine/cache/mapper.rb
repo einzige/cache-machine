@@ -42,7 +42,7 @@ module CacheMachine
           options.reverse_merge! DEFAULT_RESOURCE_OPTIONS
 
           # Scopes are used for filtering records what we do not want to store in cache-map.
-          @cache_resource.cache_scopes << options[:scopes]
+          @cache_resource.cache_scopes |= [*options[:scopes]]
 
           # Timestamp is used for tracking changes in whole collection (outside any scope).
           if options[:timestamp]
