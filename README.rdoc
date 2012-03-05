@@ -1,5 +1,5 @@
 = cache-machine
-http://img155.imageshack.us/img155/3097/logo1nqk.png
+http://img195.imageshack.us/img195/5371/cachemachinefinal2.png
 
 An ActiveRecord mixin that helps managing cached content in a Ruby on Rails application with complex data update dependencies.
 
@@ -18,13 +18,13 @@ Cache Machine depends only on the Rails.cache API and is thereby library agnosti
 = Usage
 
   # Fetch cache of venues collection on model_instance.
-  @neighborhood.fetch_cache_of(:venues) { @neighborhood.venues }
+  @neighborhood.fetch_cache_of(:venues) { venues }
 
   # Specify format.
-  @neighborhood.fetch_cache_of(:venues, :format => :json) { @neighborhood.venues.to_json }
+  @neighborhood.fetch_cache_of(:venues, :format => :json) { venues.to_json }
 
   # Paginated content.
-  @neighborhood.fetch_cache_of(:venues, :page => 2) { @neighborhood.venues.paginate(:page => 2) }
+  @neighborhood.fetch_cache_of(:venues, :page => 2) { venues.paginate(:page => 2) }
 
 In you target model define <b>cache map</b>:
 
