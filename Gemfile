@@ -1,6 +1,5 @@
 source "http://rubygems.org"
 
-gem "activemodel"
 gem "rails"
 gem "redis"
 

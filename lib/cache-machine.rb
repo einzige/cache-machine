@@ -1,6 +1,6 @@
 #--
 # Copyright (c) 2011 {PartyEarth LLC}[http://partyearth.com]
-# mailto:kgoslar@partyearth.com
+# mailto:szinin@partyearth.com
 #++
 require "cache_machine/cache/scope"
 require "cache_machine/cache/timestamp_builder"
