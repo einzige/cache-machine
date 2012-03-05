@@ -99,7 +99,7 @@ module CacheMachine
         #
         # @param [ String, Symbol ] anything
         def reset_timestamp_of(anything)
-          self.reset_resource_timestamp(self.class, self.send(self.class.primary_key), anything)
+          CacheMachine::Cache::Map.reset_resource_timestamp(self.class, self.send(self.class.primary_key), anything)
         end
         alias reset_timestamp reset_timestamp_of
       end
