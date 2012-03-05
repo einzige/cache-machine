@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.date = %q{2012-03-05}
   s.description = %q{A Ruby on Rails framework to support cache management based on explicitely modeled caching dependencies.}
   s.email = %q{szinin@partyearth.com}
-  s.extra_rdoc_files = %w{LICENSE.txt README.rdoc}
+  s.extra_rdoc_files = %w{LICENSE.txt README.md}
   s.files = `git ls-files`.split("\n")
   s.homepage = %q{http://github.com/partyearth/cache-machine}
   s.licenses = ["MIT"]
