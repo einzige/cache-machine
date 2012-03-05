@@ -40,7 +40,7 @@ CacheMachine::Cache::Map.new.draw do
   end
 
   resource House do
-    collection :walls, :timestamp => false do
+    collection :walls, :scope => :vertical, :timestamp => false do
       members :front_walls, :side_walls
       member :bricks
       member :windows
@@ -214,6 +214,11 @@ CacheMachine::Cache.map_adapter = CacheMachine::Adapters::Rails.new
 Default adapter uses standard ```Rails.cache``` API.
 
 Redis adapter is available in cache-machine-redis gem, please check out [here](http://github.com/zininserge/cache-machine-redis).
+
+## Rake tasks
+Cache machine will produce SQL queries on each update in collection until all map of associations will stored in cache.
+You can "prefill" cache map running:
+```rake cache_machine:fill_associations_map```
 
 ## Contributing to cache-machine
 
