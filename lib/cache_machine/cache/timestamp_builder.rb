@@ -3,6 +3,10 @@ module CacheMachine
     module TimestampBuilder
       extend ActiveSupport::Concern
 
+      included do
+        cattr_accessor :registering_timestamp
+      end
+
       module ClassMethods
 
         # Defines timestamp for object.
@@ -15,12 +19,14 @@ module CacheMachine
         # @param [ String, Symbol ] timestamp_name
         # @param [ Hash ] options
         def define_timestamp(timestamp_name, options = {}, &block)
-          instance_exec(timestamp_name, options) do |timestamp_name, options|
-            puts self.inspect
-            (class << self; self end).send :define_method, timestamp_name do
+          @@registering_timestamp = [timestamp_name, options, block]
+          class << self
+            timestamp_name, options, block = *@@registering_timestamp
+
+            define_method timestamp_name do
 
               # Block affecting on timestamp.
-              stamp_value = block_given? ? ([*instance_eval(&block)] << 'stamp').join('_') : 'stamp'
+              stamp_value = block ? ([*instance_eval(&block)] << 'stamp').join('_') : 'stamp'
 
               # The key of timestamp itself.
               stamp_key_value = timestamp_key_of([timestamp_name, stamp_value].join('_'))
@@ -42,6 +48,7 @@ module CacheMachine
               end
             end
           end
+          @@registering_timestamp = nil
         end
 
         # Returns timestamp cache key for anything.
