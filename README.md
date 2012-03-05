@@ -2,7 +2,7 @@
 
 An ActiveRecord mixin that helps managing cached content in a Ruby on Rails application with complex data update dependencies.
 
-Cache Machine provides
+Cache Machine provides:
 
 - high-level methods for accessing cached content using page names, numbers, time stamps etc,
 - a DSL to describe update dependencies between the data models underlying the cached content,
