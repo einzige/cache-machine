@@ -1,5 +1,4 @@
 require "cache_machine/adapters/rails"
-require "cache_machine/adapters/redis"
 require "cache_machine/cache/map"
 
 module CacheMachine
