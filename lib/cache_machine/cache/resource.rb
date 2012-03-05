@@ -52,10 +52,14 @@ module CacheMachine
             yield
           else
             if options.has_key? :timestamp
+              unless self.class.respond_to? options[:timestamp]
+                raise ArgumentError, "Undefined timestamp '#{options[:timestamp]}' for class #{self.class}"
+              end
+
               _member = CacheMachine::Cache::Map.timestamped_resource_member_key(self.class,
                                                                                  self.send(self.class.primary_key),
                                                                                  _member,
-                                                                                 instance_eval(&options[:timestamp]))
+                                                                                 self.class.send(options[:timestamp]))
             end
             CacheMachine::Logger.info "CACHE_MACHINE (fetch_cache_of): reading '#{cache_key_of(_member)}'."
             CacheMachine::Cache::storage_adapter.fetch(cache_key_of(_member), :expires_in => expires_in, &block)

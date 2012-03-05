@@ -11,200 +11,199 @@ You will find Cache Machine useful if you:
 * use Memcache to cache fragments of a web site that contain data from a variety of underlying data models
 * anytime one of the underlying data models changes, all the cached page fragments in which this data model occurs - and only those - need to be invalidated/updated
 * you have many data models, cached fragments, and many data models used inside each cached fragment
+* you want to update cache from background job (i.e. cache-sweeper does not know about your changes)
 
-Cache Machine depends only on the Rails.cache API and is thereby library agnostic.
+Cache Machine is library agnostic. You can use your own cache adapters (see below).
 
 # Usage
 
+Setup your cache dependencies in config/initializers/cache-machine.rb using <b>cache map</b>. Very similar to Rails routes:
 ```ruby
-# Fetch cache of venues collection on model_instance.
-@neighborhood.fetch_cache_of(:venues) { venues }
+CacheMachine::Cache::Map.new.draw do
+  resource City do
+    collection :streets do
+      member :houses
+    end
 
-# Specify format.
-@neighborhood.fetch_cache_of(:venues, :format => :json) { venues.to_json }
-
-# Paginated content.
-@neighborhood.fetch_cache_of(:venues, :page => 2) { venues.paginate(:page => 2) }
-```
-
-In you target model define <b>cache map</b>:
-
-```ruby
-cache_map :venues  => [:hotspots, :today_events],
-          :cities  => [:venues],
-          :streets => :hotspots,
-          :users
-```
-
-This example shows you how changes of one collection affect on invalidation process.
-For each record of your target model:
-
-- Cache for <b>users</b> collection associated with object of your target model is invalidated when changing (_add_, _remove_, _update_) the _users_ collection
-- Cache for <b>venues</b> collection associated with object of your target model is invalidated when changing the _venues_ collection associated with that object
-- Cache for <b>venues</b> collection associated with object of your target model is invalidated when changing the _cities_ collection. In this case machine automatically invalidates _hotspots_ and _today_events_
-- Cache for <b>cities</b> collection associated with object of your target model is invalidated when changing the _cities_ collection
-- Cache for <b>hotspots</b> collection is invalidated when changing the _venues_ collection
-- Cache for <b>hotspots</b> collection is invalidated when changing the _streets_ collection
-- Cache for <b>hotspots</b> collection is invalidated when changing the _cities_ collection
-- Cache for <b>today_events</b> collection is invalidated when changing the _venues_ collection
-- Cache for <b>today_events</b> collection is invalidated when changing the _cities_ collection
-
-<b>Cache map may contain any name, whatever you want. But invalidation process starts only when ActiveRecord collection is changed.</b>
-
-
-## Custom cache invalidation
-
-### Using timestamps
-Suppose you need to reset cache of _schedule_of_events_ every day.
-
-```ruby
-@lady_gaga.fetch_cache_of :schedule_of_events, :timestamp => lambda { Date.today } do
-  @lady_gaga.events.where(:date.gt => Date.today)
-end
-```
-
-### Using Cache Machine timestamps
-Suppose you need to reset cache of _tweets_ every 10 minutes.
-
-```ruby
-class LadyGagaPerformer < ActiveRecord::Base
-  define_timestamp :tweets_timestamp, :expires_in => 10.minutes
-end
-
-#...
-
-# Somewhere
-@lady_gaga.fetch_cache_of :tweets, :timestamp => :tweets_timestamp do
-  TwitterApi.fetch_tweets_for @lady_gaga
-end
-```
-
-Suppose you need custom timestamp value.
-
-```ruby
-class LadyGagaPerformer < ActiveRecord::Base
-  define_timestamp(:tweets_timestamp) { Time.now.to_i + self.id }
-end
-
-#...
-
-# Somewhere
-@lady_gaga.fetch_cache_of :tweets, :timestamp => :tweets_timestamp do
-  TwitterApi.fetch_tweets_for @lady_gaga
-end
-```
-
-Note what timestamp declarations work in object scope. Lets take an example:
-
-```ruby
-class LadyGagaPerformer < ActiveRecord::Base
-  define_timestamp (:tweets_timestamp) { tweets.last.updated_at.to_i }
-
-  has_many :tweets
-end
-
-class Tweet < ActiveRecord::Base
-  belongs_to :lady_gaga_performer
-end
-```
-
-### Using methods as timestamps
-Suppose you have your own really custom cache key.
-
-```ruby
-class LadyGagaPerformer < ActiveRecord::Base
-  def my_custom_cache_key
-    rand(100) + rand(1000) + rand(10000)
+    collection :houses do
+      member :bricks
+      member :windows
+    end
   end
-end
 
-#...
+  resource Street do
+    collection :houses
+    collection :walls
+  end
 
-# Somewere
-@lady_gaga.fetch_cache_of(:something, :timestamp => :my_custom_cache_key) { '...' }
-```
-
-### Using class timestamps
-Suppose you need to fetch cached content of one of your collections.
-
-```ruby
-Rails.cache.fetch(MyModel.timestamped_key) { '...' }
-```
-
-Want to see collection timestamp?
-
-```ruby
-MyModel.timestamp
-```
-
-### Manual cache invalidation
-```ruby
-# For classes.
-MyModel.reset_timestamp
-
-# For collections.
-@lady_gaga.delete_cache_of :events
-
-# For timestamps.
-@lady_gaga.reset_timestamp_of :events
-
-# You can reset all associated caches using map.
-@lady_gaga.delete_all_caches
-```
-
-## Cache formats
-Cache Machine invalidates cache using a couple of keys with the different formats.
-Default formats are: EHTML, HTML, JSON, and XML.
-
-This means you call 5 times for cache invalidation (1 time without specifying format) with different keys. Sometimes it is too much. Cache machine allows you to set your own formats. Just place in your environment config or in initializer the following:
-
-```ruby
-CacheMachine::Cache.formats = [:doc, :pdf]
-```
-
-Or if you do not want to use formats at all:
-
-```ruby
-CacheMachine::Cache.formats = nil
-```
-
-Then use:
-
-```ruby
-@lady_gaga.fetch_cache_of(:new_songs, :format => :doc) { "LaLaLa".to_doc }
-@lady_gaga.fetch_cache_of(:new_songs, :format => :pdf) { "GaGaGa".to_pdf }
-```
-
-Cache Machine will invalidate cache for each format you specified in config.
-
-## Working with paginated content
-Suppose you installed WillPaginate gem and want to cache each page with fetched results separately.
-
-```ruby
-class TweetsController < ApplicationController
-
-  def index
-    @tweets = @lady_gaga.fetch_cache_of(:tweets, :page => params[:page]) do
-      Tweet.all.paginate(:page => params[:page])
+  resource House do
+    collection :walls, :timestamp => false do
+      members :front_walls, :side_walls
+      member :bricks
+      member :windows
     end
   end
 end
 ```
 
-Cache Machine will use `:page` as a part of cache key and will invalidate each page on any change in associated collection.
+In this case your models should look like this:
+```ruby
+class City < ActiveRecord::Base
+  has_many :streets
+  has_many :houses, :through => :streets
+end
+
+class Street < ActiveRecord::Base
+  belongs_to :city
+  has_many :houses
+  has_many :walls, :through => :houses
+end
+
+class House < ActiveRecord::Base
+  belongs_to :street
+  has_many :walls
+end
+
+class Wall < ActiveRecord::Base
+  belongs_to :house
+  # has_many :bricks
+end
+```
+
+This example shows you how changes in your database affect on cache:
+
+- When you create/update/destroy any <b>wall</b>:
+  - cache of <b>walls collection<b> expired for <b>house</b> associated with that updated/created/destroyed wall
+  - cache of <b>walls collection<b> expired for <b>street</b> (where wall's house is located) associated with that updated/created/destroyed
+  - cache of <b>front_walls</b> and <b>side_walls</b> expired for <b>house</b> associated with that updated/created/destroyed wall
+  - cache of <b>bricks</b> expired for <b>house</b> associated with that updated/created/destroyed wall
+  - cache of <b>windows</b> expired for <b>house</b> associated with that updated/created/destroyed wall
+- When you create/update/destroy any <b>house</b>:
+  - cache of <b>houses</b> updated for associated <b>street</b>
+  - cache of <b>houses</b> updated for associated <b>city</b>
+- When you create/update/destroy any <b>street</b>:
+  - cache of <b>streets</b> updated for associated <b>city</b>
+  - cache of <b>houses</b> updated for associated <b>city</b>
+- ... :)
+
+<b>Member may have any name, whatever you want. But invalidation process starts only when collection is changed.</b>
+
+## Custom cache invalidation
+
+### Using timestamps
+Timestamps allow you to build very complex and custom cache dependencies.
+
+In your model:
+```ruby
+class House < ActiveRecord::Base
+  define_timestamp(:walls_timestamp) { [ bricks.count, windows.last.updated_at ] }
+end
+```
+
+Anywhere else:
+```ruby
+@house.fetch_cache_of :walls, :timestamp => :walls_timestamp do
+  walls.where(:built_at => Date.today)
+end
+```
+
+This way you add additional condition to cache-key used for fetching data from cache:
+Any time when bricks count is changed or any window is updated your cache key will be changed and block will return fresh data.
+Timestamp should return array or string.
+
+### Using Cache Machine timestamps
+Suppose you need to reset cache of _tweets_ every 10 minutes.
+
+```ruby
+class LadyGaga < ActiveRecord::Base
+  define_timestamp :tweets_timestamp, :expires_in => 10.minutes do
+    ...
+  end
+end
+
+#...
+
+# Somewhere
+@lady_gaga.fetch_cache_of :tweets, :timestamp => :tweets_timestamp do
+  TwitterApi.fetch_tweets_for @lady_gaga
+end
+```
+
+```fetch_cache_of``` block uses same options as Rails.cache.fetch. You can easily add _expires_in_ option in it directly.
+```ruby
+@house.fetch_cache :bricks, :expires_in => 1.minute do
+ ...
+end
+```
+
+Cache Machine stores timestamps for each of your model declared as resource in cache map.
+```ruby
+House.timestamp
+```
+Each time your houses collection is changed timestamp will change its value.
+You can disable this callback in your cache map:
+```ruby
+CacheMachine::Cache::Map.new.draw do
+  resource House, :timestamp => false
+end
+```
+
+### Manual cache invalidation
+```ruby
+# For classes.
+House.reset_timestamp
+
+# For collections.
+@house.delete_cache :bricks
+
+# For timestamps.
+@house.reset_timestamp :bricks
+
+# You can reset all associated caches using map.
+@house.delete_all_caches
+```
+
+## Associations cache
+You can fetch ids of an association from cache.
+```ruby
+@house.association_ids(:bricks) # will return array of ids
+```
+You can fetch associated objects from cache.
+```ruby
+@house.associated_from_cache(:bricks) # will return scope of relation with condition to ids from cache map.
+```
 
 ## ActionView helper
 From examples above:
 
-```ruby
-<%= cache_for @lady_gaga, :updoming_events do %>
+```erb
+<%= cache_for @lady_gaga, :upcoming_events do %>
   <p>Don't hide yourself in regret
      Just love yourself and you're set</p>
 <% end %>
 ```
 
-The `cache_for` method automatically sets EHTML format on cache key.
+## Adapters
+Cache Machine supports different types for storing cache:
+- cache map adapter
+- timestamps adapter
+- content (storage) adapter
 
+_Cache map adapter_ contains ids of relationships for each object from cache map.
+_Timestamps adapter_ contains timestamps.
+_Storage adapter_ contains cached content itself (usually strings, html, etc).
+
+You can setup custom adapters in your environment:
+```ruby
+url = "redis://user:pass@host.com:9383/"
+uri = URI.parse(url)
+CacheMachine::Cache.timestamps_adapter = CacheMachine::Adapters::Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+CacheMachine::Cache.storage_adapter = CacheMachine::Adapters::Rails.new
+CacheMachine::Cache.map_adapter = CacheMachine::Adapters::Rails.new
+```
+Default adapter uses standard ```Rails.cache``` API.
+
+Redis adapter is available in cache-machine-redis gem, please check out [here](http://github.com/zininserge/cache-machine-redis)
 
 ## Contributing to cache-machine
 
