@@ -75,8 +75,8 @@ end
 This example shows you how changes in your database affect on cache:
 
 - When you create/update/destroy any <b>wall</b>:
-  - cache of <b>walls collection<b> expired for <b>house</b> associated with that updated/created/destroyed wall
-  - cache of <b>walls collection<b> expired for <b>street</b> (where wall's house is located) associated with that updated/created/destroyed
+  - cache of <b>walls collection</b> expired for <b>house</b> associated with that updated/created/destroyed wall
+  - cache of <b>walls collection</b> expired for <b>street</b> (where wall's house is located) associated with that updated/created/destroyed
   - cache of <b>front_walls</b> and <b>side_walls</b> expired for <b>house</b> associated with that updated/created/destroyed wall
   - cache of <b>bricks</b> expired for <b>house</b> associated with that updated/created/destroyed wall
   - cache of <b>windows</b> expired for <b>house</b> associated with that updated/created/destroyed wall
@@ -195,13 +195,10 @@ From examples above:
 
 ## Adapters
 Cache Machine supports different types for storing cache:
-- cache map adapter
-- timestamps adapter
-- content (storage) adapter
 
-_Cache map adapter_ contains ids of relationships for each object from cache map.
-_Timestamps adapter_ contains timestamps.
-_Storage adapter_ contains cached content itself (usually strings, html, etc).
+- <b>cache map adapter</b> contains ids of relationships for each object from cache map
+- <b>timestamps adapter</b> contains timestamps
+- <b>content (storage) adapter</b> contains cached content itself (usually strings, html, etc)
 
 You can setup custom adapters in your environment:
 
