@@ -1,6 +1,6 @@
 source "http://rubygems.org"
 
-gem "rails"
+gem "rails", '3.1.4'
 
 group :development do
   gem "bundler", "~> 1.0.0"
