@@ -93,11 +93,12 @@ module CacheMachine
           # Bind callbacks.
           [*options[:on]].each { |callback| self.send(callback, &reset_cache_proc) }
 
+          #ext = Proc.new { |collection_instance|
+          #  collection_instance.update_cache_map!(self, collection_name)
+          #}
+
           # When new element appears - update maps.
-          cache_resource.send(:add_association_callbacks, collection_name,
-                              :after_add => lambda { |resource_instance, collection_instance|
-                                collection_instance.update_cache_map!(resource_instance, collection_name)
-                              })
+          # ActiveRecord::Associations::Builder::CollectionAssociation.build(cache_resource, collection_name, {}, &ext)
 
           # Hook on '<<', 'concat' operations.
           #cache_resource.send(:add_association_callbacks, collection_name,

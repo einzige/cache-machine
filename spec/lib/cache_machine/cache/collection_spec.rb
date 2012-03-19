@@ -39,8 +39,10 @@ describe CacheMachine::Cache::Collection do
     end
 
     it "hooks update_map callback" do
-      Join.any_instance.should_receive(:update_cache_map!).once.with(cacher, :joins)
-      cacher.joins.create
+      pending "AfterAdd deprecated" do
+        Join.any_instance.should_receive(:update_cache_map!).once.with(cacher, :joins)
+        cacher.joins.create
+      end
     end
   end
 
@@ -50,11 +52,15 @@ describe CacheMachine::Cache::Collection do
     end
 
     it "updates direct association map" do
-      CacheMachine::Cache.map_adapter.should_receive(:append_id_to_map).with(cacher, :joins, kind_of(Numeric))
+      pending "AfterAdd deprecated" do
+        CacheMachine::Cache.map_adapter.should_receive(:append_id_to_map).with(cacher, :joins, kind_of(Numeric))
+      end
     end
 
     it "updates reverse collection map" do
-      CacheMachine::Cache.map_adapter.should_receive(:append_id_to_reverse_map).with(Cacher, :joins, kind_of(Join), cacher.id)
+      pending "AfterAdd deprecated!" do
+        CacheMachine::Cache.map_adapter.should_receive(:append_id_to_reverse_map).with(Cacher, :joins, kind_of(Join), cacher.id)
+      end
     end
   end
 
