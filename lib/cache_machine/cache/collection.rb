@@ -93,7 +93,7 @@ module CacheMachine
           # Bind callbacks.
           [*options[:on]].each { |callback| self.send(callback, &reset_cache_proc) }
 
-          ext = lambda { |resource_instance, collection_instance|
+          ext = lambda { |collection_instance|
             collection_instance.update_cache_map!(resource_instance, collection_name)
           }
 
