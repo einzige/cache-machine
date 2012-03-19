@@ -58,7 +58,9 @@ describe CacheMachine::Cache::Collection do
     end
 
     it "updates reverse collection map" do
-      CacheMachine::Cache.map_adapter.should_receive(:append_id_to_reverse_map).with(Cacher, :joins, kind_of(Join), cacher.id)
+      pending "AfterAdd deprecated" do
+        CacheMachine::Cache.map_adapter.should_receive(:append_id_to_reverse_map).with(Cacher, :joins, kind_of(Join), cacher.id)
+      end
     end
   end
 
