@@ -94,7 +94,7 @@ module CacheMachine
           [*options[:on]].each { |callback| self.send(callback, &reset_cache_proc) }
 
           ext = lambda { |collection_instance|
-            collection_instance.update_cache_map!(resource_instance, collection_name)
+            collection_instance.update_cache_map!(self, collection_name)
           }
 
           # When new element appears - update maps.
