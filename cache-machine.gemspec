@@ -21,14 +21,14 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<rails>, [">= 3.1.4"])
+      s.add_runtime_dependency(%q<rails>, [">= 3"])
       s.add_development_dependency(%q<bundler>, ["~> 1.0.21"])
     else
       s.add_dependency(%q<rails>, [">= 3"])
       s.add_dependency(%q<bundler>, ["~> 1.0.21"])
     end
   else
-    s.add_dependency(%q<rails>, [">= 3.1.4"])
+    s.add_dependency(%q<rails>, [">= 3"])
     s.add_dependency(%q<bundler>, ["~> 1.0.21"])
   end
 end
